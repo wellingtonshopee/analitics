@@ -18,12 +18,21 @@ SECRET_KEY = 'django-insecure-=%%*3whr#t3ute)p06j)v01b=72lw*npsanv#d(u1=z^xu#fy4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# 🚀 AJUSTE NECESSÁRIO AQUI: Permitir hosts locais para o desenvolvimento
+# 🚀 AJUSTE PARA CODESPACE: Permite acesso de localhost e de qualquer subdomínio codespaces.dev
 ALLOWED_HOSTS = [
     '127.0.0.1', 
     'localhost', 
-    '10.0.2.2'
+    '10.0.2.2',
+    # Permite qualquer URL gerada pelo Codespace (ex: nome-da-instancia-8000.codespaces.dev)
+    '*.codespaces.dev', 
 ]
+
+# --- AJUSTE CRÍTICO DE SEGURANÇA (CSRF) PARA CODESPACE ---
+# Isso informa ao Django que requisições vindas da URL temporária do Codespace são confiáveis.
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.codespaces.dev',
+]
+# -----------------------------------------------------------
 
 
 # Application definition
@@ -38,7 +47,6 @@ INSTALLED_APPS = [
 
     # Apps de Terceiros Necessários
     'django.contrib.humanize', 
-    
     'widget_tweaks', 
     
     
