@@ -1,0 +1,50 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}Upload de Dados ONHold Inicial{% endblock %}
+
+{% block conteudo %}
+<h1 class="mb-4">Upload de Arquivo ONHold Inicial (47 Colunas)</h1>
+
+{# 🔑 AJUSTE CRÍTICO: BLOCO PARA EXIBIR MENSAGENS DE ERRO OU SUCESSO #}
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+{# FIM DO BLOCO DE MENSAGENS #}
+
+
+<div class="card shadow mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Importação Completa de Dados OnHold</h5>
+    </div>
+    <div class="card-body">
+        
+        {# MUDANÇA AQUI: Aponta para a nova view #}
+        <form method="POST" action="{% url 'upload_onhold_inicial' %}" enctype="multipart/form-data" class="row g-3">
+            {% csrf_token %}
+
+            <div class="col-md-6">
+                <label for="data_referencia" class="form-label fw-bold">Data de Referência (Obrigatório)</label>
+                <input type="date" class="form-control" id="data_referencia" name="data_referencia" required>
+                <div class="form-text">Esta data será registrada como a data de envio/referência do lote.</div>
+            </div>
+
+            <div class="col-md-6">
+                <label for="csv_file" class="form-label fw-bold">Selecione o Arquivo CSV</label>
+                <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+                <div class="form-text">O arquivo deve conter as 47 colunas no formato padrão de exportação.</div>
+            </div>
+
+            <div class="col-12 mt-4">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-upload me-2"></i> Iniciar Upload e Processamento
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block titulo %}{{ titulo }}{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    <h1 class="mb-4 fw-bold text-dark">{{ titulo }}</h1>
+
+    {# BLOCO PARA EXIBIR MENSAGENS DE ERRO OU SUCESSO #}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    {# FIM DO BLOCO DE MENSAGENS #}
+
+    {% if registros %}
+    
+    <a href="{% url 'dashboard_pool' %}" class="btn btn-secondary mb-3">
+        <i class="fas fa-arrow-left me-2"></i> Voltar ao Dashboard
+    </a>
+
+    <form method="POST" action="{% url 'delete_pool_records' %}" id="delete-form">
+        {% csrf_token %}
+
+        <div class="card shadow-lg mb-4">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Registros Encontrados ({{ registros|length|intcomma }})</h5>
+                
+                <button type="button" class="btn btn-danger btn-sm" id="btn-retirar-pool" disabled>
+                    <i class="fas fa-trash-alt me-2"></i> Retirar da Pool (0 Selecionado)
+                </button>
+            </div>
+            
+            <div class="card-body p-0" style="max-height: 70vh; overflow-y: auto;">
+                <table class="table table-striped table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th class="text-center"><input type="checkbox" id="select-all"></th>
+                            <th>ID</th>
+                            <th>Shipment Id</th>
+                            <th>Status</th>
+                            <th>Destination Hub</th>
+                            <th>Data Upload</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for registro in registros %}
+                        <tr>
+                            <td class="text-center">
+                                <input type="checkbox" name="selected_records" value="{{ registro.id }}" class="record-checkbox">
+                            </td>
+                            <td>{{ registro.id }}</td>
+                            <td>{{ registro.shipment_id }}</td>
+                            <td><span class="badge bg-secondary">{{ registro.status|default:"N/A" }}</span></td>
+                            <td>{{ registro.destination_hub|default:"N/A" }}</td>
+                            <td>{{ registro.data_upload|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+    
+    {% else %}
+    <div class="alert alert-info mt-4 shadow">
+        Nenhum registro encontrado para a cidade.
+    </div>
+    {% endif %}
+
+    <script>
+        const selectAllCheckbox = document.getElementById('select-all');
+        const checkboxes = document.querySelectorAll('.record-checkbox');
+        const deleteButton = document.getElementById('btn-retirar-pool');
+
+        // Função para atualizar o texto e o estado do botão
+        function updateDeleteButton() {
+            const selectedCount = document.querySelectorAll('.record-checkbox:checked').length;
+            deleteButton.textContent = `Retirar da Pool (${selectedCount} Selecionado${selectedCount > 1 ? 's' : ''})`;
+            deleteButton.disabled = selectedCount === 0;
+        }
+
+        // Evento para o checkbox 'Selecionar Todos'
+        selectAllCheckbox.addEventListener('change', function() {
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+            updateDeleteButton();
+        });
+
+        // Evento para checkboxes individuais
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateDeleteButton);
+        });
+
+        // Evento principal para o botão de deletar (com Alerta)
+        deleteButton.addEventListener('click', function() {
+            const selectedCount = document.querySelectorAll('.record-checkbox:checked').length;
+            
+            if (selectedCount > 0) {
+                // 🚨 CAIXA DE ALERTA PERSONALIZADA
+                const confirmMessage = `
+                    ATENÇÃO! Você está prestes a remover ${selectedCount} registro(s) permanentemente.
+
+                    Ao apagar este(s) registro(s), eles NÃO PODERÃO ser recuperados ou visualizados novamente. 
+                    
+                    Confirma a exclusão?
+                `;
+                
+                if (confirm(confirmMessage)) {
+                    // Se confirmar, submete o formulário com os IDs selecionados
+                    document.getElementById('delete-form').submit();
+                }
+            }
+        });
+
+        // Inicializa o estado do botão ao carregar a página
+        updateDeleteButton();
+
+    </script>
+</div>
+{% endblock %}

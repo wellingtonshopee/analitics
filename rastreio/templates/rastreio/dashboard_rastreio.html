@@ -1,0 +1,436 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block titulo %}Dashboard Rastreio de Pedidos{% endblock %}
+
+{% block custom_styles %}
+<style>
+    /* ======= ESTILOS GERAIS ======= */
+    h1 {
+        font-weight: 700;
+        color: #2c3e50;
+    }
+
+    .container-fluid {
+        max-width: 1400px;
+        padding-left: 15px;
+        padding-right: 15px;
+        margin: 0 auto;
+    }
+
+    /* ======= KPIS ======= */
+    .kpi-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .kpi-col {
+        flex-grow: 1;
+        min-width: 240px;
+    }
+
+    .kpi-col-small {
+        flex-grow: 1;
+        min-width: 150px;
+    }
+
+    .kpi-status-card .h4-metric {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+
+    .kpi-total-card .h2-metric {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+
+    /* ======= CARDS ======= */
+    .card {
+        border-radius: 0.8rem;
+    }
+
+    .card.shadow {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+        transition: transform 0.1s ease-in-out;
+    }
+
+    .card.shadow:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+
+    .kpi-status-card {
+        background-color: #f8f9fa;
+    }
+
+    /* ======= CORES DE STATUS ======= */
+    .status-Shipped-card { border-left: 5px solid #007bff; }
+    .status-ArrivedatLMHub-card { border-left: 5px solid #28a745; }
+    .status-Outfordelivery-card { border-left: 5px solid #ffc107; }
+    .status-DeliverySuccessful-card { border-left: 5px solid #6f42c1; }
+    .status-LMHub_Received-card { border-left: 5px solid #17a2b8; }
+    .status-Pending-card { border-left: 5px solid #dc3545; }
+    .status-Delivered-card { border-left: 5px solid #28a745; }
+    .status-Canceled-card { border-left: 5px solid #dc3545; }
+    .status-default-card { border-left: 5px solid #6c757d; }
+
+    /* ======= TABELAS ======= */
+    .table-responsive {
+        border-radius: 0.8rem;
+        overflow-x: auto;
+    }
+
+    .table-striped > tbody > tr:nth-of-type(odd) > * {
+        background-color: #f3f3f3;
+    }
+
+    .table th {
+        background-color: #343a40;
+        color: white;
+        border-bottom: none;
+    }
+
+    .table thead tr:first-child th:first-child { border-top-left-radius: 0.8rem; }
+    .table thead tr:first-child th:last-child { border-top-right-radius: 0.8rem; }
+
+    .table-danger, .table-danger > th, .table-danger > td {
+        background-color: #f8d7da !important;
+        color: #721c24;
+        font-weight: 600;
+    }
+
+    /* ======= ALERTAS ======= */
+    .alert-muriae {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-color: #f5c6cb;
+        padding: 15px;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* ======= TABELA MURIAÉ ======= */
+    .muriae-table th {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .muriae-row-muriae { background-color: #e0f7fa; }
+    .muriae-row-outros { background-color: #ffebee; }
+
+    /* ======= BUSCA ======= */
+    #tableSearch {
+        max-width: 400px;
+    }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="text-primary">{{ titulo }}</h1>
+        <a href="{% url 'menu_rastreio' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Voltar ao Menu
+        </a>
+    </div>
+
+    {% if total_hub_diferente_muriae > 0 %}
+    <div class="alert alert-muriae mb-4">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Atenção!</strong> Existem {{ total_hub_diferente_muriae|intcomma }} rastreios filtrados que não têm
+        <strong>Destination Hub</strong> igual a 'LM Hub_MG_Muriaé'.
+    </div>
+    {% endif %}
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0"><i class="fas fa-filter me-2"></i> Filtros Aplicados</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+                {% csrf_token %}
+
+                <div class="col-md-3">
+                    <label for="data_inicio" class="form-label">Data Início (Arquivo)</label>
+                    <input type="date" class="form-control" id="data_inicio" name="data_inicio" value="{{ data_inicio_str|default:'' }}">
+                </div>
+
+                <div class="col-md-3">
+                    <label for="data_fim" class="form-label">Data Fim (Arquivo)</label>
+                    <input type="date" class="form-control" id="data_fim" name="data_fim" value="{{ data_fim_str|default:'' }}">
+                </div>
+
+                <div class="col-md-3">
+                    <label for="status_filtro" class="form-label">Status</label>
+                    <select class="form-select" id="status_filtro" name="status_filtro">
+                        <option value="" {% if not status_filtro %}selected{% endif %}>Todos os Status</option>
+                        {% for item in status_opcoes %}
+                            <option value="{{ item.status }}" {% if status_filtro == item.status %}selected{% endif %}>
+                                {{ item.status }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="hub_filtro" class="form-label">Destination Hub</label>
+                    <select class="form-select" id="hub_filtro" name="hub_filtro">
+                        <option value="" {% if not hub_filtro %}selected{% endif %}>Todos os Hubs</option>
+                        {% for item in destination_hub_opcoes %}
+                            <option value="{{ item.destination_hub }}" {% if hub_filtro == item.destination_hub %}selected{% endif %}>
+                                {{ item.destination_hub|default:"(Não Informado)" }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {% if search_query %}
+                    <input type="hidden" name="q" value="{{ search_query }}">
+                {% endif %}
+
+                <div class="col-12 mt-3 d-flex justify-content-between align-items-end">
+                    <div>
+                        <button type="submit" class="btn btn-primary me-2"><i class="fas fa-search me-1"></i> Aplicar Filtros</button>
+                        <a href="{% url 'dashboard_rastreio' %}" class="btn btn-outline-secondary"><i class="fas fa-redo-alt me-1"></i> Limpar Filtros</a>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="somente_excecoes_form_submit" name="somente_excecoes"
+                               {% if somente_excecoes %}checked{% endif %}
+                               onchange="this.form.submit()">
+                        <label class="form-check-label text-danger fw-bold" for="somente_excecoes_form_submit">
+                            <i class="fas fa-exclamation-circle me-1"></i> Mostrar Somente Exceções
+                        </label>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if total_registros > 0 %}
+
+    <h3 class="mb-3 mt-5 text-secondary">Métricas Principais</h3>
+    <div class="row g-4 mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="card kpi-total-card bg-primary text-white shadow">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="h2-metric">{{ total_registros|intcomma }}</div>
+                        <p class="mb-0 text-white-50">Total de Rastreios</p>
+                    </div>
+                    <i class="fas fa-truck-moving fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card kpi-total-card bg-info text-white shadow">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="h2-metric">{{ total_hub_muriae|intcomma }}</div>
+                        <p class="mb-0 text-white-50">Hub Muriaé (Total)</p>
+                    </div>
+                    <i class="fas fa-warehouse fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card kpi-total-card bg-warning text-dark shadow">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="h2-metric">{{ total_hub_outros|intcomma }}</div>
+                        <p class="mb-0 text-black-50">Outros Hubs (Total)</p>
+                    </div>
+                    <i class="fas fa-route fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card kpi-total-card bg-success text-white shadow">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="h2-metric">{{ percentual_muriae|default:'0.0' }}%</div>
+                        <p class="mb-0 text-white-50">% Muriaé</p>
+                    </div>
+                    <i class="fas fa-percent fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-4">
+        <div class="col-xl-6">
+            <div class="card shadow h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-list-ul me-2"></i> Total por Status (Top 10)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-3">
+                        {% for item in kpis_por_status %}
+                            {% with status_class=item.status|default:'default'|cut:' '|cut:'-'|cut:'_' %}
+                            <a href="{% url 'detalhe_rastreio_view' %}?status_filtro={{ item.status|urlencode }}&data_inicio={{ data_inicio_str|default:'' }}&data_fim={{ data_fim_str|default:'' }}{% if hub_filtro %}&hub_filtro={{ hub_filtro }}{% endif %}{% if somente_excecoes %}&somente_excecoes=on{% endif %}"
+                               class="text-decoration-none kpi-col-small">
+                               <div class="card kpi-status-card shadow-sm status-{{ status_class }}-card p-3 h-100">
+                                   <p class="mb-1 text-muted small">{{ item.status|default:"(Não Informado)" }}</p>
+                                   <div class="h4-metric">{{ item.count|intcomma }}</div>
+                               </div>
+                            </a>
+                            {% endwith %}
+                        {% empty %}
+                            <p class="text-muted">Nenhum dado de status encontrado com os filtros aplicados.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6">
+            <div class="card shadow h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-sitemap me-2"></i> Distribuição Destination Hub</h6>
+                </div>
+                <div class="card-body">
+                    {% if total_registros > 0 %}
+                    <table class="table table-bordered table-hover muriae-table">
+                        <thead>
+                            <tr>
+                                <th>Destination Hub</th>
+                                <th class="text-end">Total de Rastreios</th>
+                                <th class="text-end">% do Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="muriae-row-muriae">
+                                <td><strong>LM Hub_MG_Muriaé</strong></td>
+                                <td class="text-end">{{ total_hub_muriae|intcomma }}</td>
+                                <td class="text-end">{{ percentual_muriae|default:'0.0' }}%</td>
+                            </tr>
+                            <tr class="muriae-row-outros">
+                                <td><strong>Outros Hubs</strong></td>
+                                <td class="text-end">{{ total_hub_outros|intcomma }}</td>
+                                <td class="text-end">{{ percentual_outros|default:'0.0' }}%</td>
+                            </tr>
+                            <tr class="table-dark">
+                                <td><strong>TOTAL GERAL</strong></td>
+                                <td class="text-end">{{ total_registros|intcomma }}</td>
+                                <td class="text-end">100.0%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    {% else %}
+                        <p class="text-muted">Nenhum dado para o relatório Muriaé vs Outros.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="mb-3 mt-5 text-secondary">Detalhe dos Rastreios (Página {{ paginator.number }} de {{ paginator.paginator.num_pages }})</h3>
+
+    <form method="GET" action="{% url 'dashboard_rastreio' %}">
+        <div class="row mb-3 align-items-center">
+            <div class="col-md-6 d-flex">
+                <input type="text" name="q" id="tableSearch" class="form-control me-2" placeholder="Pesquisar em todo o banco de dados (SLS Tracking, Order ID, Status, Station, Hub...)" value="{{ search_query|default:'' }}">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+            </div>
+
+            <div class="col-md-6 text-end">
+                {% if data_inicio_str %}<input type="hidden" name="data_inicio" value="{{ data_inicio_str }}">{% endif %}
+                {% if data_fim_str %}<input type="hidden" name="data_fim" value="{{ data_fim_str }}">{% endif %}
+                {% if status_filtro %}<input type="hidden" name="status_filtro" value="{{ status_filtro }}">{% endif %}
+                {% if hub_filtro %}<input type="hidden" name="hub_filtro" value="{{ hub_filtro }}">{% endif %}
+                {% if somente_excecoes %}<input type="hidden" name="somente_excecoes" value="on">{% endif %}
+
+                <span class="text-muted">Página {{ paginator.number }} de {{ paginator.paginator.num_pages }}</span>
+                <a href="{% url 'exportar_csv_rastreio' %}?{{ url_params|slice:'1:' }}" class="btn btn-sm btn-success ms-3">
+                    <i class="fas fa-file-csv me-1"></i> Exportar CSV
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <div class="card shadow mb-5">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">Registros Detalhados</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0" id="rastreioTable">
+                    <thead>
+                        <tr>
+                            <th>SLS Tracking Number</th>
+                            <th>Status</th>
+                            <th>Current Station</th>
+                            <th>Destination Hub</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in dados_tabela %}
+                        <tr {% if item.status == 'LMHub_Received' and item.destination_hub != 'LM Hub_MG_Muriaé' %}class="table-danger"{% endif %}>
+                            <td>{{ item.sls_tracking_number|default:"(Não Informado)" }}</td>
+                            <td>{{ item.status|default:"(Não Informado)" }}</td>
+                            <td>{{ item.current_station|default:"(Não Informado)" }}</td>
+                            <td>
+                                {% if item.status == 'LMHub_Received' and item.destination_hub != 'LM Hub_MG_Muriaé' %}
+                                    <span class="badge bg-danger me-2">Criar TO para Envio</span>
+                                    <strong>{{ item.destination_hub|default:"(Não Informado)" }}</strong>
+                                {% else %}
+                                    {{ item.destination_hub|default:"(Não Informado)" }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if paginator.paginator.num_pages > 1 %}
+        <div class="card-footer d-flex justify-content-center">
+            <nav aria-label="Navegação de Página">
+                <ul class="pagination pagination-sm mb-0">
+                    {% if paginator.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ paginator.previous_page_number }}{{ url_params }}">Anterior</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+                    {% endif %}
+
+                    {% for i in paginator.paginator.page_range %}
+                        {% if paginator.number == i %}
+                            <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                        {% elif i > paginator.number|add:'-3' and i < paginator.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?page={{ i }}{{ url_params }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if paginator.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ paginator.next_page_number }}{{ url_params }}">Próxima</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Próxima</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+
+    {% else %}
+    <div class="alert alert-info mt-4 shadow">
+        Nenhum registro de Rastreio encontrado com os filtros aplicados.
+        <a href="{% url 'upload_csv_rastreio' %}" class="alert-link">Clique aqui para carregar dados de rastreio.</a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

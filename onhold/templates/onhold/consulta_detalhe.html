@@ -1,0 +1,82 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}{{ titulo_pagina }}{% endblock %}
+
+{% block conteudo %}
+
+<div class="container-fluid py-4">
+
+    <div class="mb-3">
+        <a href="{% url 'dashboard_onhold' %}?data_inicio={{ data_inicio_str }}&data_fim={{ data_fim_str }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Voltar para Dashboard
+        </a>
+    </div>
+
+    <h1 class="mb-2">{{ titulo_pagina }}</h1>
+    <p class="lead text-muted">
+        Total de pacotes: **{{ total_pacotes }}**
+        <br>
+        <small>Período de: {{ data_inicio_formatada }} até {{ data_fim_formatada }}</small>
+    </p>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>SLS Tracking Number</th>
+                    <th>Data Envio</th>
+                    <th>OnHoldReason</th>
+                    <th>Status</th>
+                    <th>Driver Name</th>
+                    <th>Sort Code Name</th>
+                    <th>Postal Code</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in page_obj.object_list %}
+                <tr>
+                    <td>{{ item.sls_tracking_number }}</td>
+                    <td>{{ item.data_envio|date:"d/m/Y"|default:"N/A" }}</td>
+                    <td>{{ item.onhold_reason|default:"N/A" }}</td>
+                    <td>
+                        {% if item.status == 'OnHold' %}
+                            <span class="badge bg-danger">{{ item.status }}</span>
+                        {% elif item.status == 'LMHub_Received' %}
+                            <span class="badge bg-success">{{ item.status }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ item.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.driver_name|default:"N/A" }}</td>
+                    <td>{{ item.sort_code_name|default:"N/A" }}</td>
+                    <td>{{ item.postal_code|default:"N/A" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">Nenhum pacote encontrado para o filtro e período.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <nav aria-label="Paginação">
+        <ul class="pagination justify-content-center">
+            {% with filter_params="&data_inicio=" filter_data_inicio=data_inicio_str filter_data_fim=data_fim_str filter_motivo="&motivo=" filter_motivo_val=valor_filtro %}
+                
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1{{ filter_params }}{{ filter_data_inicio }}&data_fim={{ filter_data_fim }}">Primeira</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{{ filter_params }}{{ filter_data_inicio }}&data_fim={{ filter_data_fim }}">Anterior</a></li>
+                {% endif %}
+
+                <li class="page-item disabled"><span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{{ filter_params }}{{ filter_data_inicio }}&data_fim={{ filter_data_fim }}">Próxima</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{{ filter_params }}{{ filter_data_inicio }}&data_fim={{ filter_data_fim }}">Última</a></li>
+                {% endif %}
+            {% endwith %}
+        </ul>
+    </nav>
+</div>
+{% endblock %}

@@ -1,0 +1,219 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block titulo %}Detalhes - {{ report_title }}{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+        <div>
+            <h1 class="h3 fw-bold text-dark mb-1">{{ report_title }}</h1>
+            <p class="text-muted mb-0">
+                Detalhes dos pacotes no relatório <strong>ID: {{ report_id }}</strong>
+            </p>
+        </div>
+
+        <div class="mt-3 mt-md-0">
+            <a href="{% url 'inventory_analysis:analysis_dashboard' %}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i> Voltar ao Dashboard
+            </a>
+
+            {% if parcel_details %}
+            <a href="{% url 'inventory_analysis:export_csv' report_id=report_id %}?{{ query_string }}" class="btn btn-success">
+                <i class="fas fa-file-csv me-2"></i> Exportar CSV ({{ parcel_details|length }} registros)
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="{{ form.data_inicio.id_for_label }}" class="form-label">De:</label>
+                    {{ form.data_inicio }}
+                </div>
+
+                <div class="col-md-3">
+                    <label for="{{ form.data_fim.id_for_label }}" class="form-label">Até:</label>
+                    {{ form.data_fim }}
+                </div>
+
+                <div class="col-md-3">
+                    <label for="{{ form.acao_sugerida.id_for_label }}" class="form-label">Ação Sugerida:</label>
+                    {{ form.acao_sugerida }}
+                </div>
+
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-2"></i> Aplicar Filtro
+                    </button>
+                    <a href="{% url 'inventory_analysis:detail_list' report_id=report_id %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i> Limpar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Nº Rastreio</th>
+                            <th>Local Origem</th>
+                            <th>Status Sweeper</th>
+                            <th>Ação Sugerida</th>
+                            <th>Status Confronto</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in parcel_details %}
+                        <tr>
+                            <td>{{ item.rastreio }}</td>
+                            <td>{{ item.location }}</td>
+                            <td>{{ item.sweeper_status }}</td>
+                            <td>
+                                <span class="badge bg-{{ item.status_color }}">{{ item.action }}</span>
+                            </td>
+                            <td>{{ item.status_label }}</td>
+                            <td class="text-center">
+                                <button type="button"
+                                        class="btn btn-sm btn-info ver-mais-btn"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#actionModal"
+                                        data-parcel-id="{{ item.rastreio }}"
+                                        data-current-action="{{ item.action }}"
+                                        data-current-status="{{ item.status_label }}">
+                                    <i class="fas fa-eye me-1"></i> Ver Mais
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                Nenhum pacote encontrado para este relatório com os filtros aplicados.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="actionModalLabel">
+                    Ações para <span id="modal-parcel-id" class="fw-bold"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <p><strong>Ação Atual Sugerida:</strong> <span id="modal-current-action" class="badge bg-primary"></span></p>
+                <p><strong>Status Atual:</strong> <span id="modal-current-status"></span></p>
+
+                <hr>
+
+                <h6>Ações Manuais:</h6>
+
+                <a href="#" id="action-add" class="btn btn-sm btn-success w-100 mb-2"
+                   data-action-url="{% url 'inventory_analysis:mark_as_added' parcel_id='000' %}"
+                   title="Marcar manualmente este pacote como ADICIONAR na Collection Pool.">
+                    <i class="fas fa-plus-circle me-2"></i> Mudar para: ADICIONAR NA COLLECTION POOL
+                </a>
+
+                <a href="#" id="action-remove" class="btn btn-sm btn-warning w-100 mb-4"
+                   data-action-url="{% url 'inventory_analysis:remove_from_pool' parcel_id='000' %}"
+                   title="Marcar manualmente este pacote para ser IGNORADO e NÃO ADICIONADO.">
+                    <i class="fas fa-ban me-2"></i> Mudar para: NÃO ADICIONAR A COLLECTION POOL
+                </a>
+
+                <a href="#" id="action-delete" class="btn btn-sm btn-danger w-100"
+                   title="Excluir o registro manual, revertendo o status para o cálculo automático do sistema.">
+                    <i class="fas fa-trash me-2"></i> EXCLUIR AÇÃO MANUAL (Reverte para Status Automático)
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block custom_styles %}
+<style>
+    h1, h5 {
+        font-weight: 600;
+    }
+
+    .badge {
+        font-size: 0.85rem;
+        border-radius: 0.5rem;
+    }
+
+    .card-header {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    .btn-outline-info:hover {
+        color: #fff;
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+    }
+</style>
+{% endblock custom_styles %}
+
+{% block custom_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var actionModal = document.getElementById('actionModal');
+    if (actionModal) {
+        actionModal.addEventListener('show.bs.modal', function(event) {
+            var button = event.relatedTarget;
+
+            var parcelId = button.getAttribute('data-parcel-id');
+            var currentAction = button.getAttribute('data-current-action');
+            var currentStatus = button.getAttribute('data-current-status');
+
+            var modalParcelId = actionModal.querySelector('#modal-parcel-id');
+            var modalCurrentAction = actionModal.querySelector('#modal-current-action');
+            var modalCurrentStatus = actionModal.querySelector('#modal-current-status');
+            var addLink = actionModal.querySelector('#action-add');
+            var removeLink = actionModal.querySelector('#action-remove');
+            var deleteLink = actionModal.querySelector('#action-delete');
+
+            modalParcelId.textContent = parcelId;
+            modalCurrentAction.textContent = currentAction;
+            modalCurrentStatus.textContent = currentStatus;
+
+            // 1. Geração de URLs
+            var addUrlTemplate = addLink.getAttribute('data-action-url');
+            addLink.href = addUrlTemplate.replace('000', parcelId);
+
+            var removeUrlTemplate = removeLink.getAttribute('data-action-url');
+            removeLink.href = removeUrlTemplate.replace('000', parcelId);
+
+            // A CHAVE DO AJUSTE: Concatena '?action=delete' na URL de remoção
+            deleteLink.href = removeUrlTemplate.replace('000', parcelId) + '?action=delete';
+
+            // 2. Adiciona a confirmação (onclick) dinâmica
+            addLink.setAttribute('onclick', `return confirm('Tem certeza que deseja marcar ${parcelId} como ADICIONAR?')`);
+            removeLink.setAttribute('onclick', `return confirm('Tem certeza que deseja marcar ${parcelId} como IGNORAR/NÃO ADICIONAR?')`);
+            deleteLink.setAttribute('onclick', `return confirm('ATENÇÃO: Deseja realmente EXCLUIR o registro de ação manual para ${parcelId}? O status do pacote será revertido para o cálculo automático de divergência.')`);
+        });
+    }
+});
+</script>
+{% endblock custom_scripts %}
+{% endblock conteudo %}

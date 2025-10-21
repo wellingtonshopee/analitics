@@ -1,0 +1,75 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}{{ titulo }}{% endblock %}
+
+{% block conteudo %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12 d-flex justify-content-between align-items-center mb-3">
+            <h1><i class="fas fa-bolt"></i> {{ titulo }}</h1>
+            
+            <a href="{% url 'conferencia:upload_arquivos' %}" class="btn btn-secondary">
+                <i class="fas fa-file-upload"></i> Ir para Conferência por Arquivo
+            </a>
+        </div>
+        <div class="col-12">
+            <p class="lead">Compare rapidamente duas listas colando os códigos abaixo (máx. 1000 registros por lista).</p>
+        </div>
+    </div>
+    
+    {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'conferencia:processar_checagem_rapida' %}">
+        {% csrf_token %}
+        <div class="row mt-4">
+            
+            <div class="col-md-6">
+                <div class="card border-primary mb-3">
+                    <div class="card-header bg-primary text-white">Lista A</div>
+                    <div class="card-body">
+                        {{ form.lista_a.label_tag }}
+                        {{ form.lista_a }}
+                        <div class="form-text">{{ form.lista_a.help_text }}</div>
+                        {% if form.lista_a.errors %}
+                            <div class="alert alert-danger mt-1">{{ form.lista_a.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card border-danger mb-3">
+                    <div class="card-header bg-danger text-white">Lista B</div>
+                    <div class="card-body">
+                        {{ form.lista_b.label_tag }}
+                        {{ form.lista_b }}
+                        <div class="form-text">{{ form.lista_b.help_text }}</div>
+                         {% if form.lista_b.errors %}
+                            <div class="alert alert-danger mt-1">{{ form.lista_b.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-12 text-center">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-check-double"></i> Executar Checagem Rápida
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% load widget_tweaks %}
+
+<div class="row align-items-center mb-3">
+    <div class="col-md-5">
+        <label class="fw-bold">Tópico Título:</label>
+        {# Remova o prefixo se ele estiver aqui #}
+        {% render_field form.titulo class='form-control' %} 
+        {% for error in form.titulo.errors %}
+            <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+    </div>
+    <div class="col-md-2">
+        <label class="fw-bold">Ordem:</label>
+        {% render_field form.ordem class='form-control' %}
+    </div>
+    <div class="col-md-3">
+        <label class="fw-bold">Ação:</label>
+        <div class="d-flex align-items-center">
+            <button type="button" class="btn btn-sm btn-danger delete-topico-btn me-2" data-topico-prefix="{{ prefix }}">
+                <i class="fas fa-trash"></i> Excluir Tópico
+            </button>
+        </div>
+        {# O campo DELETE está no loop principal (editar_apresentacao.html), mas vamos garantir que o ID do tópico está aqui #}
+        {{ form.id }}
+        {% for error in form.non_field_errors %}
+            <div class="text-danger small mt-2">{{ error }}</div>
+        {% endfor %}
+        
+        {# ADICIONAR CAMPO DELETE AQUI PARA GARANTIR QUE ELE ESTEJA DENTRO DO FORM DO TÓPICO #}
+        {% render_field form.DELETE %}
+    </div>
+</div>

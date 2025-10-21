@@ -1,0 +1,318 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}{{ titulo }}{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    
+    {# BLOCO PARA EXIBIR MENSAGENS #}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    {# FIM DO BLOCO DE MENSAGENS #}
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">{{ titulo }}</h5>
+            {# Botão para voltar ao Dashboard de Expedição #}
+            <a href="{% url 'expedicao:dashboard' %}" class="btn btn-light btn-sm">
+                <i class="fas fa-arrow-left me-2"></i> Voltar ao Dashboard
+            </a>
+        </div>
+        <div class="card-body">
+            
+            <h4 class="mb-3 text-primary">Análise de Expedição - Gestão Audit</h4>
+            <ul class="list-group list-group-flush mb-5">
+                <li class="list-group-item"><strong>Data da Expedição:</strong> {{ arquivo.data_referencia|date:"d/m/Y" }}</li> 
+            </ul>
+
+            <h4 class="mb-3 text-success">KPIs de Volume e Eficiência</h4>
+            <div class="row text-center">
+                
+                {# Total de Rotas #}
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-info text-white p-3">
+                        <h6 class="text-white">Total de Rotas</h6>
+                        <h2 class="text-white">{{ kpis.total_rotas }}</h2>
+                    </div>
+                </div>
+
+                {# Total de Ordens Iniciais #}
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-light p-3">
+                        <h6 class="text-muted">Total de Pacotes Iniciados</h6>
+                        <h2 class="text-success">{{ kpis.total_iniciais }}</h2>
+                    </div>
+                </div>
+                
+                {# Total de Ordens Finais #}
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-light p-3">
+                        <h6 class="text-muted">Total de Pacotes Finalizados</h6>
+                        <h2 class="text-dark">{{ kpis.total_finais }}</h2>
+                    </div>
+                </div>
+                
+                {# Total de Ordens Escaneadas #}
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-light p-3">
+                        <h6 class="text-muted">Total de Pacotes Escaneados </h6>
+                        <h2 class="text-info">{{ kpis.total_escaneados }}</h2>
+                    </div>
+                </div>
+
+                {# Percentual Escaneado #}
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-light p-3">
+                        <h6 class="text-muted">Percentual Escaneado</h6>
+                        <h2 class="text-primary">{{ kpis.percentual_escaneado }}</h2>
+                    </div>
+                </div>
+                
+                {# Total de Missorted Orders #}
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-light p-3">
+                        <h6 class="text-muted">Total de Missorted</h6>
+                        <h2 class="text-danger">{{ kpis.total_missorted }}</h2>
+                    </div>
+                </div>
+                
+                {# Total de Ordens Missing #}
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-light p-3">
+                        <h6 class="text-muted">Total de Missing</h6>
+                        <h2 class="text-danger">{{ kpis.total_missing }}</h2>
+                    </div>
+                </div>
+
+            </div>
+
+            <h4 class="mb-4 mt-5 text-warning">Desempenho da Expedição </h4>
+            <div class="row">
+                
+                <div class="col-md-4 mb-4">
+                    <div class="card p-3 shadow-sm border-{{ kpis.kpi_missorted.status.cor }} h-100">
+                        <h6 class="card-title text-danger">KPI: Taxa de Missorted</h6>
+                        
+                        {# Div com ALTURA FIXA (120px) para o Chart.js não desconfigurar #}
+                        <div style="height: 120px; width: 100%;" class="mb-2 position-relative">
+                            <canvas id="missortedGaugeChart"></canvas>
+                        </div>
+                        
+                        <p class="mb-1 text-muted">Limiar - 0.67% Verde Acima 0.68% Vermelho</p>
+                        
+                        <h4 class="mt-1 text-{{ kpis.kpi_missorted.status.cor }}">
+                            {{ kpis.kpi_missorted.percentual|floatformat:2|default_if_none:"0.00" }}%
+                        </h4>
+                        
+                        <p class="lead text-{{ kpis.kpi_missorted.status.cor }} small fw-bold">
+                            Status: {{ kpis.kpi_missorted.status.texto }}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-md-8 mb-4">
+                    <div class="row h-100">
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="card p-3 border-danger h-100">
+                                <h6 class="text-danger">Análise de Erros: Operador com MAIS Erros</h6>
+                                {% if kpis.operador_mais_erros %}
+                                    <h5 class="text-danger">{{ kpis.operador_mais_erros.validation_operator }}</h5>
+                                    <small class="text-danger">
+                                        <strong>Total de Erros: {{ kpis.operador_mais_erros.total_erros }}</strong><br>
+                                        Missorted: {{ kpis.operador_mais_erros.missorted_orders }} | Missing: {{ kpis.operador_mais_erros.missing_orders }}<br>
+                                        ({{ kpis.operador_mais_erros.total_registros }} registros)
+                                    </small>
+                                {% else %}
+                                    <p class="text-muted">N/A</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card p-3 border-success h-100">
+                                <h6 class="text-success">Análise de Produtividade: Operador MAIS PRODUTIVO (Volume)</h6>
+                                {% if kpis.operador_mais_produtivo %}
+                                    <h5 class="text-success">{{ kpis.operador_mais_produtivo.validation_operator }}</h5>
+                                    <small class="text-success">
+                                        <strong>Total de Registros: {{ kpis.operador_mais_produtivo.total_registros }}</strong><br>
+                                        Total de Erros: {{ kpis.operador_mais_produtivo.total_erros }}<br>
+                                        Missorted: {{ kpis.operador_mais_produtivo.missorted_orders }} | Missing: {{ kpis.operador_mais_produtivo.missing_orders }}
+                                    </small>
+                                {% else %}
+                                    <p class="text-muted">N/A</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            {# Tabela de Amostra de Registros #}
+            <h4 class="mb-3 mt-4 text-secondary">Amostra dos Registros</h4>
+            
+            {% if registros %}
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>AT/TO</th>
+                            <th>Corredor/Cage</th>
+                            <th>Iniciais</th>
+                            <th>Escaneados</th>
+                            <th>Status Validação</th>
+                            <th>Operador</th>
+                            <th>Início Validação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for registro in registros %}
+                        <tr>
+                            <td>{{ registro.at_to }}</td>
+                            <td>{{ registro.corridor_cage }}</td>
+                            <td>{{ registro.total_initial_orders }}</td>
+                            <td>{{ registro.total_scanned_orders }}</td>
+                            <td>{{ registro.at_to_validation_status }}</td>
+                            <td>{{ registro.validation_operator }}</td>
+                            <td>{{ registro.validation_start_time|date:"H:i:s"|default:"-" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-muted">Exibindo {{ registros|length }} registros de uma amostra de {{ kpis.total_iniciais }} ordens.</p>
+            {% else %}
+            <div class="alert alert-warning">Nenhum registro encontrado para este arquivo.</div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{# Carregue o Chart.js (Remova se já estiver na sua base.html) #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('missortedGaugeChart')?.getContext('2d');
+    if (!ctx) {
+        console.error("Elemento canvas para o gráfico não encontrado.");
+        return;
+    }
+
+    // =========================================================================
+    // 1. DEFINIÇÃO DE VARIÁVEIS
+    // =========================================================================
+    // Garante que os valores do Django sejam lidos como números de ponto flutuante.
+    // O .replace(',', '.') é uma segurança caso o Django formate o número com vírgula.
+    const percentual = parseFloat("{{ kpis.kpi_missorted.percentual|floatformat:4|default_if_none:'0.0000' }}".replace(',', '.'));
+    
+    // Parâmetros do gráfico
+    const limiarVerde = 0.67; // Onde a zona verde termina
+    const maxEscala = 1.5;    // O valor máximo que o velocímetro exibe (1.5%)
+
+    // =========================================================================
+    // 2. DADOS DO GRÁFICO (ZONAS VERDE E VERMELHA)
+    // =========================================================================
+    // Calcula o tamanho da fatia verde e vermelha em proporção ao máximo da escala.
+    const proporcaoVerde = (limiarVerde / maxEscala) * 100;
+    const proporcaoVermelha = 100 - proporcaoVerde;
+
+    const data = {
+        labels: ['Zona OK', 'Zona Ruim'],
+        datasets: [{
+            data: [proporcaoVerde, proporcaoVermelha],
+            backgroundColor: ['#28a745', '#dc3545'], // Verde e Vermelho
+            borderWidth: 0,
+        }]
+    };
+
+    // =========================================================================
+    // 3. PLUGIN PARA DESENHAR O PONTEIRO (AGULHA)
+    // =========================================================================
+    const gaugeNeedle = {
+        id: 'gaugeNeedle',
+        afterDatasetDraw(chart, args, options) {
+            const { ctx, chartArea: { left, right, bottom } } = chart;
+            
+            // Ponto central da rotação da agulha (base do semicírculo)
+            const centerX = (left + right) / 2;
+            const centerY = bottom;
+            const outerRadius = args.meta.data[0].outerRadius;
+
+            // Limita o valor do ponteiro ao máximo da escala para que ele não "ultrapasse" o gráfico
+            const valorPonteiro = Math.min(percentual, maxEscala);
+            
+            // Mapeia o valor (0 a 1.5) para um ângulo em radianos (de 180° a 0°)
+            // Math.PI é 180 graus (esquerda), 0 é 0 graus (direita)
+            const angulo = Math.PI * (1 - (valorPonteiro / maxEscala));
+
+            // Calcula a ponta da agulha
+            const pontoX = centerX + Math.cos(angulo) * outerRadius * 0.9; // 90% do raio
+            const pontoY = centerY - Math.sin(angulo) * outerRadius * 0.9;
+
+            // Define a cor da agulha com base no valor real
+            const corPonteiro = (percentual <= limiarVerde) ? 'black' : '#dc3545';
+            
+            ctx.save();
+            
+            // 1. Desenha a linha da agulha
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(pontoX, pontoY);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = corPonteiro;
+            ctx.stroke();
+
+            // 2. Desenha o círculo central (pivô) da agulha
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 6, 0, 2 * Math.PI);
+            ctx.fillStyle = corPonteiro;
+            ctx.fill();
+            
+            ctx.restore();
+        }
+    };
+
+    // =========================================================================
+    // 4. CONFIGURAÇÃO FINAL DO GRÁFICO
+    // =========================================================================
+    const config = {
+        type: 'doughnut',
+        data: data,
+        options: {
+            // Cria um semicírculo perfeito que começa na esquerda e termina na direita
+            rotation: -90,      // Começa na posição "9 horas"
+            circumference: 180, // Desenha apenas 180 graus
+            cutout: '70%',
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    enabled: true,
+                    // Garante que o tooltip sempre mostre o valor percentual real
+                    callbacks: {
+                        label: function(context) {
+                            return `Taxa Missorted: ${percentual.toFixed(2).replace('.', ',')}%`;
+                        }
+                    }
+                }
+            }
+        },
+        plugins: [gaugeNeedle] // Adiciona o plugin do ponteiro
+    };
+
+    // Renderiza o gráfico
+    new Chart(ctx, config);
+});
+</script>
+{% endblock extra_js %}

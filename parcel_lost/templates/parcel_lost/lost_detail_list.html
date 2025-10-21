@@ -1,0 +1,89 @@
+{% extends "core/base.html" %}
+{% load humanize %}
+{# Assumindo que você tem um templatefilters.py para o filtro 'exclude_page' #}
+{% load templatefilters %} 
+
+{% block titulo %}{{ titulo }}{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        {# Voltar para o Dashboard mantendo os filtros de data #}
+        <a href="{% url 'parcel_lost:dashboard_lost' %}{% if filter_params %}?{{ filter_params|exclude_page }}{% endif %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left me-2"></i> Voltar para Dashboard
+</a>
+        {# Se o export_url fosse implementado, ficaria aqui #}
+        {% if export_url %}
+        <a href="{{ export_url }}?{{ filter_params }}" class="btn btn-success">
+            <i class="fas fa-file-csv me-2"></i> Exportar {{ total_registros|intcomma }} Registros (CSV)
+        </a>
+        {% endif %}
+    </div>
+
+    <h1 class="mb-4">{{ titulo }}</h1>
+    <p class="lead text-muted">Exibindo todos os **{{ count_type_name }}** para o período filtrado. (Total: {{ total_registros|intcomma }})</p>
+
+    {% if page_obj.object_list %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>Data Reg.</th>
+                    <th>SPX Tracking Number</th>
+                    <th>Status / Avaria</th>
+                    <th>Data Ocorrência SPX</th>
+                    <th>Usuário Reg.</th>
+                    <th>Data Upload Sist.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in page_obj %}
+                <tr>
+                    <td>{{ item.data_registro|date:"d/m/Y" }}</td>
+                    <td><span class="badge bg-primary">{{ item.spx_tracking_number }}</span></td>
+                    <td>{{ item.get_final_status_avaria_display }}</td>
+                    <td>{{ item.data_ocorrencia_spx|default:"-" }}</td>
+                    <td>{{ item.usuario_registro.username }}</td>
+                    
+                    {# 🔑 AJUSTE: Aplicando o filtro date:"d/m/Y" para remover a hora #}
+                    <td>{{ item.data_registro_sistema|date:"d/m/Y"}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# Lógica de Paginação (Adaptada do seu outro módulo) #}
+    <nav aria-label="Paginação">
+        <ul class="pagination justify-content-center">
+            {% with filter_qs_clean=filter_params|exclude_page %}
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page=1&{{ filter_qs_clean }}">Primeira</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ filter_qs_clean }}">Anterior</a></li>
+            {% endif %}
+
+            {# Bloco de páginas centrais #}
+            {% for i in page_obj.paginator.page_range %}
+                {% if page_obj.number == i %}
+                    <li class="page-item active" aria-current="page"><span class="page-link">{{ i }}</span></li>
+                {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ i }}&{{ filter_qs_clean }}">{{ i }}</a></li>
+                {% elif i == page_obj.number|add:'-3' or i == page_obj.number|add:'3' %}
+                    <li class="page-item disabled d-none d-sm-block"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ filter_qs_clean }}">Próxima</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&{{ filter_qs_clean }}">Última</a></li>
+            {% endif %}
+            
+            {% endwith %}
+        </ul>
+    </nav>
+    {% else %}
+    <div class="alert alert-info">Nenhum registro encontrado para este filtro.</div>
+    {% endif %}
+</div>
+{% endblock %}

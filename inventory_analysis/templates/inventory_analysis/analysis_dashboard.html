@@ -1,0 +1,185 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block titulo %}Dashboard Análise da Collection Pool{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    <h1 class="h3 mb-4 fw-bold text-dark">Dashboard Análise da Collection Pool</h1>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end" action="{% url 'inventory_analysis:analysis_dashboard' %}">
+                <div class="col-md-3">
+                    <label for="{{ form.data_inicio.id_for_label }}" class="form-label">De:</label>
+                    {{ form.data_inicio }}
+                </div>
+                <div class="col-md-3">
+                    <label for="{{ form.data_fim.id_for_label }}" class="form-label">Até:</label>
+                    {{ form.data_fim }}
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-2"></i> Aplicar Filtro
+                    </button>
+                    {% if request.GET.data_inicio or request.GET.data_fim %}
+                    <a href="{% url 'inventory_analysis:analysis_dashboard' %}" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-times me-2"></i> Limpar
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+
+            {% if kpis %}
+            <p class="mt-3 mb-0 text-muted">
+                Dados exibidos de <strong>{{ kpis.data_inicio|date:"d/m/Y" }}</strong> a <strong>{{ kpis.data_fim|date:"d/m/Y" }}</strong>.
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row gy-4 gx-4">
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-3 border-info shadow-lg rounded-3 h-100 kpi-card text-center">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-info fw-bold mb-2">Total Registros (Collection Pool)</h6>
+                    <h4 class="fw-bold text-dark mb-0">{{ kpis.total_collection_pool|default:0|intcomma }}</h4>
+                    <i class="fas fa-clipboard-list fa-2x text-secondary opacity-50 mt-3"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-3 border-warning shadow-lg rounded-3 h-100 kpi-card text-center">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-warning fw-bold mb-2">Total Registros (Parcel Sweeper)</h6>
+                    <h4 class="fw-bold text-dark mb-0">{{ kpis.total_parcel_sweeper|default:0|intcomma }}</h4>
+                    <i class="fas fa-truck-loading fa-2x text-secondary opacity-50 mt-3"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <a href="{% url 'inventory_analysis:detail_list' report_id=report_6_id %}?{{ request.GET.urlencode }}" class="text-decoration-none">
+                <div class="card border-3 border-success shadow-lg rounded-3 h-100 kpi-card text-center">
+                    <div class="card-body">
+                        <h6 class="text-uppercase text-success fw-bold mb-2">Já Adicionado na Collection Pool</h6>
+                        <h4 class="fw-bold text-dark mb-0">{{ kpis.already_in_pool|default:0|intcomma }}</h4>
+                        <i class="fas fa-check-circle fa-2x text-secondary opacity-50 mt-3"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <a href="{% url 'inventory_analysis:detail_list' report_id=report_4_id %}?{{ request.GET.urlencode }}" class="text-decoration-none">
+                <div class="card border-3 border-danger shadow-lg rounded-3 h-100 kpi-card text-center">
+                    <div class="card-body">
+                        <h6 class="text-uppercase text-danger fw-bold mb-2">🚨 Adicionar na Collection Pool</h6>
+                        <h4 class="fw-bold text-dark mb-0">{{ kpis.to_be_added_to_pool|default:0|intcomma }}</h4>
+                        <i class="fas fa-plus-circle fa-2x text-secondary opacity-50 mt-3"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <a href="{% url 'inventory_analysis:detail_list' report_id=report_5_id %}?{{ request.GET.urlencode }}" class="text-decoration-none">
+                <div class="card border-3 border-primary shadow-lg rounded-3 h-100 kpi-card text-center">
+                    <div class="card-body">
+                        <h6 class="text-uppercase text-primary fw-bold mb-2">Backlog Total Aptos p/ Roteirização (Pool)</h6>
+                        <h4 class="fw-bold text-dark mb-0">{{ kpis.total_aptos_roteirizacao|default:0|intcomma }}</h4>
+                        <i class="fas fa-boxes fa-2x text-secondary opacity-50 mt-3"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <a href="{% url 'inventory_analysis:detail_list' report_id=report_2_id %}?{{ request.GET.urlencode }}" class="text-decoration-none">
+                <div class="card border-3 border-info shadow-lg rounded-3 h-100 kpi-card text-center">
+                    <div class="card-body">
+                        <h6 class="text-uppercase text-info fw-bold mb-2">Pedido Recebido Não Roteirizado</h6>
+                        <h4 class="fw-bold text-dark mb-0">{{ kpis.non_routed_total|default:0|intcomma }}</h4>
+                        <i class="fas fa-route fa-2x text-secondary opacity-50 mt-3"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <a href="{% url 'inventory_analysis:detail_list' report_id=report_3_id %}?{{ request.GET.urlencode }}" class="text-decoration-none">
+                <div class="card border-3 border-success shadow-lg rounded-3 h-100 kpi-card text-center">
+                    <div class="card-body">
+                        <h6 class="text-uppercase text-success fw-bold mb-2">Collection Pool sem Correspondência no Sweeper</h6>
+                        <h4 class="fw-bold text-dark mb-0">{{ kpis.collection_pool_only_total|default:0|intcomma }}</h4>
+                        <i class="fas fa-database fa-2x text-secondary opacity-50 mt-3"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <a href="{% url 'inventory_analysis:action_menu' %}" class="text-decoration-none">
+                <div class="card border-3 border-secondary shadow-lg rounded-3 h-100 kpi-card text-center">
+                    <div class="card-body">
+                        <h6 class="text-uppercase text-secondary fw-bold mb-2">Menu</h6>
+                        <h4 class="fw-bold text-dark mb-0">Ações e Ferramentas</h4>
+                        <i class="fas fa-tools fa-2x text-secondary opacity-50 mt-3"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+    </div>
+</div>
+
+{% block custom_styles %}
+<style>
+    /* =================== VARIÁVEIS DE COR =================== */
+    :root {
+        --kpi-danger: #dc3545;
+        --kpi-warning: #ffc107;
+        --kpi-info: #0cbcdf;
+        --kpi-primary: #0d6efd;
+        --kpi-secondary: #6c757d;
+        --kpi-success: #198754; 
+    }
+
+    /* =================== ESTILO DOS CARDS =================== */
+    .kpi-card {
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        min-height: 160px;
+        border-width: 3px !important;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+    }
+
+    .border-danger { border-color: var(--kpi-danger) !important; }
+    .border-warning { border-color: var(--kpi-warning) !important; }
+    .border-info { border-color: var(--kpi-info) !important; }
+    .border-primary { border-color: var(--kpi-primary) !important; }
+    .border-secondary { border-color: var(--kpi-secondary) !important; }
+    .border-success { border-color: var(--kpi-success) !important; }
+
+    .kpi-card h6 {
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+    }
+
+    .kpi-card h4 {
+        font-size: 1.6rem;
+    }
+
+    .kpi-card i {
+        display: block;
+        margin: 0 auto;
+    }
+</style>
+{% endblock custom_styles %}
+{% endblock conteudo %}

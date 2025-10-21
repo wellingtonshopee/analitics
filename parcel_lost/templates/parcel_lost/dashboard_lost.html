@@ -1,0 +1,367 @@
+{% extends "core/base.html" %}
+{% load humanize %}
+{% load templatefilters %}
+{% load static %}
+
+{% block titulo %}Dashboard - Parcel Lost{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    <h1 class="mb-4">Dashboard - Perdas e Avarias</h1>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="{% url 'parcel_lost:register' %}" class="btn btn-success">
+            <i class="fas fa-plus-circle me-2"></i> Inserir Novo Registro
+        </a>
+        <h4 class="mb-0 text-muted">
+            Total de Ocorrências (Filtro): <strong>{{ total_registros|intcomma }}</strong>
+        </h4>
+    </div>
+
+    {# Bloco de Filtros #}
+    <div class="card shadow mb-4 border-0">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end mb-3">
+                <div class="col-md-3">
+                    <label for="{{ form.data_inicio.id_for_label }}" class="form-label">De:</label>
+                    {{ form.data_inicio }}
+                </div>
+                <div class="col-md-3">
+                    <label for="{{ form.data_fim.id_for_label }}" class="form-label">Até:</label>
+                    {{ form.data_fim }}
+                </div>
+                <div class="col-md-3">
+                    <label for="{{ form.tipo_avaria.id_for_label }}" class="form-label">{{ form.tipo_avaria.label }}:</label>
+                    {{ form.tipo_avaria }}
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">Aplicar Filtros</button>
+                </div>
+            </form>
+            
+            <hr>
+            
+            {# BOTÕES ADICIONAIS DE AÇÃO #}
+            <div class="d-flex justify-content-start gap-2 pt-3">
+                
+                <a href="{% url 'parcel_lost:dashboard_lost' %}" class="btn btn-warning">
+                    <i class="fas fa-filter-slash me-2"></i> Limpar Filtros
+                </a>
+
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-home me-2"></i> Voltar para Dashboard Principal
+                </a>
+            </div>
+            
+        </div>
+    </div>
+
+    {% with filter_params=request.GET.urlencode %}
+    <div class="row mb-4">
+
+        {# 1. Total Lost #}
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{% url 'parcel_lost:detail_list' type_slug='total-lost' %}?{{ filter_params }}"
+               class="card text-decoration-none shadow border-left-danger h-100 py-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-danger text-uppercase mb-1">Total de Perdas (Lost)</div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">{{ kpis.total_lost|intcomma }}</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-truck-moving fa-2x text-gray-300"></i></div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        {# 2. Total Damage #}
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{% url 'parcel_lost:detail_list' type_slug='total-damage' %}?{{ filter_params }}"
+               class="card text-decoration-none shadow border-left-warning h-100 py-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-warning text-uppercase mb-1">Total de Avarias (Damage)</div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">{{ kpis.total_damage|intcomma }}</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-box-open fa-2x text-gray-300"></i></div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        {# 3. SOC Lost #}
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{% url 'parcel_lost:detail_list' type_slug='soc-lost' %}?{{ filter_params }}"
+               class="card text-decoration-none shadow border-left-secondary h-100 py-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-secondary text-uppercase mb-1">SOC - Lost</div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">{{ kpis.soc_lost|intcomma }}</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-warehouse fa-2x text-gray-300"></i></div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        {# 4. HUB Lost #}
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{% url 'parcel_lost:detail_list' type_slug='hub-lost' %}?{{ filter_params }}"
+               class="card text-decoration-none shadow border-left-danger h-100 py-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-danger text-uppercase mb-1">HUB - Lost</div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">{{ kpis.hub_lost|intcomma }}</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-map-marker-alt fa-2x text-gray-300"></i></div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        {# 5. SOC Damage #}
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{% url 'parcel_lost:detail_list' type_slug='soc-damage' %}?{{ filter_params }}"
+               class="card text-decoration-none shadow border-left-warning h-100 py-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-warning text-uppercase mb-1">SOC - Damage</div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">{{ kpis.soc_damage|intcomma }}</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-hand-holding-box fa-2x text-gray-300"></i></div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        {# 6. HUB Damage #}
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{% url 'parcel_lost:detail_list' type_slug='hub-damage' %}?{{ filter_params }}"
+               class="card text-decoration-none shadow border-left-info h-100 py-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-info text-uppercase mb-1">HUB - Damage</div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">{{ kpis.hub_damage|intcomma }}</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-hand-holding fa-2x text-gray-300"></i></div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+    {% endwith %}
+
+    <div class="row">
+        {# GRÁFICO DIÁRIO #}
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-primary text-white">Ocorrências Diárias (Lost vs Damage)</div>
+                <div class="card-body">
+                    <div style="height: 40vh; min-height: 300px;">
+                        <canvas id="dailyChart"></canvas>
+                        <div id="dailyChartNoData" class="text-center text-muted py-5" style="display: none;">
+                            <i class="fas fa-chart-bar fa-2x mb-3"></i>
+                            <p>Sem dados diários para o período selecionado.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# GRÁFICO MENSAL #}
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-info text-white">Evolução Mensal</div>
+                <div class="card-body">
+                    <div style="height: 40vh; min-height: 300px;">
+                        <canvas id="monthlyChart"></canvas>
+                        <div id="monthlyChartNoData" class="text-center text-muted py-5" style="display: none;">
+                            <i class="fas fa-chart-line fa-2x mb-3"></i>
+                            <p>Sem dados mensais para o período selecionado.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("✅ Script carregado: Dashboard Parcel Lost");
+
+    // --- Dados do Django ---
+    const chart1Labels = {{ chart1_labels|safe }};
+    // 🔑 NOVOS DADOS PARA O GRÁFICO 1
+    const chart1SocLostData = {{ chart1_soc_lost_data|safe }};
+    const chart1HubLostData = {{ chart1_hub_lost_data|safe }};
+    const chart1SocDamageData = {{ chart1_soc_damage_data|safe }};
+    const chart1HubDamageData = {{ chart1_hub_damage_data|safe }};
+
+    const chart2Labels = {{ chart2_labels|safe }};
+    // 🔑 NOVOS DADOS PARA O GRÁFICO 2
+    const chart2SocLostData = {{ chart2_soc_lost_data|safe }};
+    const chart2HubLostData = {{ chart2_hub_lost_data|safe }};
+    const chart2SocDamageData = {{ chart2_soc_damage_data|safe }};
+    const chart2HubDamageData = {{ chart2_hub_damage_data|safe }};
+
+    // DEBUG: Verifique no console se chart2Labels e chart2LostData não estão vazios
+    console.log("DEBUG: Dados Mensais (Labels):", chart2Labels);
+    console.log("DEBUG: Dados Mensais (SOC Lost):", chart2SocLostData);
+
+    if (typeof Chart === 'undefined') {
+        console.error("🚨 ERRO: Chart.js não foi carregado!");
+        return;
+    }
+
+    try {
+        // === Gráfico 1: Diário (4 Barras - SOC/HUB vs Lost/Damage) ===
+        const dailyCtx = document.getElementById('dailyChart');
+        if (dailyCtx) {
+            if (chart1Labels.length === 0) {
+                dailyCtx.style.display = 'none';
+                document.getElementById('dailyChartNoData').style.display = 'block';
+            } else {
+                new Chart(dailyCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: chart1Labels,
+                        datasets: [
+                            // ✅ NOVOS DATASETS DE GRÁFICO 1 (4 Séries)
+                            {
+                                label: 'SOC - Lost', 
+                                data: chart1SocLostData, 
+                                backgroundColor: 'rgba(255, 99, 132, 0.8)', // Vermelho
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'HUB - Lost', 
+                                data: chart1HubLostData, 
+                                backgroundColor: 'rgba(255, 159, 64, 0.8)', // Laranja
+                                borderColor: 'rgba(255, 159, 64, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'SOC - Damage', 
+                                data: chart1SocDamageData, 
+                                backgroundColor: 'rgba(54, 162, 235, 0.8)', // Azul
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'HUB - Damage', 
+                                data: chart1HubDamageData, 
+                                backgroundColor: 'rgba(75, 192, 192, 0.8)', // Verde Água
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { 
+                                beginAtZero: true,
+                                grid: {
+                                    display: false 
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log("SUCESSO: Gráfico Diário renderizado com 4 datasets!");
+            }
+        }
+
+
+        // === GRÁFICO 2: Mensal (4 Linhas - SOC/HUB vs Lost/Damage) ===
+        const monthlyCtx = document.getElementById('monthlyChart');
+        if (monthlyCtx) {
+            if (chart2Labels.length === 0) {
+                monthlyCtx.style.display = 'none';
+                document.getElementById('monthlyChartNoData').style.display = 'block';
+            } else {
+                new Chart(monthlyCtx, {
+                    type: 'line',
+                    data: {
+                        labels: chart2Labels,
+                        datasets: [
+                            // ✅ NOVOS DATASETS DE GRÁFICO 2 (4 Séries)
+                            {
+                                label: 'SOC - Lost Mensal',
+                                data: chart2SocLostData,
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                fill: false, // Alterado para false para maior clareza nas linhas
+                                tension: 0.3
+                            },
+                            {
+                                label: 'HUB - Lost Mensal',
+                                data: chart2HubLostData,
+                                borderColor: 'rgba(255, 159, 64, 1)',
+                                backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                                fill: false, 
+                                tension: 0.3
+                            },
+                            {
+                                label: 'SOC - Damage Mensal',
+                                data: chart2SocDamageData,
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                fill: false,
+                                tension: 0.3
+                            },
+                            {
+                                label: 'HUB - Damage Mensal',
+                                data: chart2HubDamageData,
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                fill: false,
+                                tension: 0.3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { 
+                                beginAtZero: true,
+                                grid: {
+                                    display: false 
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log("SUCESSO: Gráfico Mensal renderizado com 4 datasets!");
+            }
+        }
+
+    } catch (error) {
+        console.error("ERRO FATAL DURANTE A RENDERIZAÇÃO DO CHART.JS:", error);
+    }
+});
+</script>
+{% endblock %}

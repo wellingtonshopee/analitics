@@ -1,0 +1,123 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block titulo %}Consulta ONHold{% endblock %}
+
+{% block conteudo %}
+<h1 class="mb-4">Consulta de Registros ONHold</h1>
+
+<div class="card shadow mb-4">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">Filtros de Pesquisa</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            
+            <div class="col-md-4">
+                <label for="tracking" class="form-label">Tracking / Order ID</label>
+                <input type="text" class="form-control" id="tracking" name="tracking" placeholder="Buscar SLS ou Order ID" value="{{ tracking_value }}">
+            </div>
+
+            <div class="col-md-4">
+                <label for="motivo" class="form-label">Motivo de Retenção</label>
+                <select id="motivo" name="motivo" class="form-select">
+                    <option value="">Todos os Motivos</option>
+                    {% for motivo_unico in motivos_unicos %}
+                        <option value="{{ motivo_unico }}" {% if motivo_selecionado == motivo_unico %}selected{% endif %}>
+                            {{ motivo_unico }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="hub" class="form-label">HUB de Upload</label>
+                <select id="hub" name="hub" class="form-select">
+                    <option value="all">Todos os HUBs</option>
+                    {% for hub in hubs %}
+                        <option value="{{ hub.id }}" {% if hub_selecionado|stringformat:"i" == hub.id|stringformat:"i" %}selected{% endif %}>
+                            {{ hub.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label for="data_inicio" class="form-label">Data OnHold (Início)</label>
+                <input type="date" class="form-control" id="data_inicio" name="data_inicio" value="{{ data_inicio_value }}">
+            </div>
+
+            <div class="col-md-4">
+                <label for="data_fim" class="form-label">Data OnHold (Fim)</label>
+                <input type="date" class="form-control" id="data_fim" name="data_fim" value="{{ data_fim_value }}">
+            </div>
+            
+            <div class="col-12 mt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i> Buscar / Filtrar
+                </button>
+                {% if filtros_aplicados %}
+                    <a href="{% url 'consulta_onhold' %}" class="btn btn-outline-secondary ms-2">Limpar Filtros</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<h3 class="mt-5 mb-3">Resultados ({{ page_obj.paginator.count }} Encontrados)</h3>
+
+{% if not page_obj.object_list %}
+    <div class="alert alert-info">Nenhum registro encontrado com os filtros aplicados.</div>
+{% else %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm">
+            <thead class="bg-dark text-white">
+                <tr>
+                    <th>Tracking / SN</th>
+                    <th>Motivo OnHold</th>
+                    <th>Data Retenção</th>
+                    <th>Nome Comprador</th>
+                    <th>CEP</th>
+                    <th>Status</th>
+                    <th>HUB Upload</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for registro in page_obj.object_list %}
+                <tr>
+                    <td>
+                        <small class="text-muted">SLS:</small> **{{ registro.sls_tracking_number }}**<br>
+                        <small class="text-muted">Order SN:</small> {{ registro.shopee_order_sn }}
+                    </td>
+                    <td>{{ registro.onhold_reason|default:"N/A" }}</td>
+                    <td>{{ registro.onhold_time|date:"d/m/Y" }}</td>
+                    <td>{{ registro.buyer_name }}</td>
+                    <td>{{ registro.postal_code }}</td>
+                    <td><span class="badge bg-danger">{{ registro.status }}</span></td>
+                    <td>{{ registro.hub_upload.nome|default:"Global" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <nav aria-label="Navegação de Resultados">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page=1&{{ request.GET.urlencode }}">&laquo; Primeira</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">Anterior</a></li>
+            {% endif %}
+
+            <li class="page-item active" aria-current="page">
+                <span class="page-link">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Próxima</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&{{ request.GET.urlencode }}">Última &raquo;</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}Detalhe Volumosos{% endblock %}
+
+{% block conteudo %}
+
+<div class="container-fluid py-4">
+    
+    <div class="mb-3">
+        <a href="{% url 'dashboard_onhold' %}?data_inicio={{ data_inicio_str }}&data_fim={{ data_fim_str }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Voltar para Dashboard
+        </a>
+    </div>
+    <h1 class="mb-4">{{ titulo }}</h1>
+    <p class="lead text-muted">{{ subtitulo }} (Total Geral: {{ total_pacotes }})</p>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end" action="{% url 'detalhe_volumosos' %}">
+                
+                <input type="hidden" name="data_inicio" value="{{ data_inicio_str }}">
+                <input type="hidden" name="data_fim" value="{{ data_fim_str }}">
+
+                <div class="col-md-4">
+                    <label for="sort_code_name" class="form-label">Filtrar por Bairro (Sort Code Name):</label>
+                    <select class="form-select" id="sort_code_name" name="sort_code_name">
+                        <option value="">-- Todos os Bairros --</option>
+                        {% for option in sort_code_options %}
+                            <option value="{{ option }}" {% if option == filtro_sort_code_name_value %}selected{% endif %}>
+                                {{ option }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="cidade" class="form-label">Filtrar por Cidade:</label>
+                    <select class="form-select" id="cidade" name="cidade">
+                        <option value="">-- Todas as Cidades --</option>
+                        {% for option in cidades_options %}
+                            <option value="{{ option }}" {% if option == filtro_cidade_value %}selected{% endif %}>
+                                {{ option }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-4 d-flex">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-filter me-1"></i> Aplicar Filtros
+                    </button>
+                    <a href="{% url 'detalhe_volumosos' %}?data_inicio={{ data_inicio_str }}&data_fim={{ data_fim_str }}" class="btn btn-secondary">
+                        <i class="fas fa-times me-1"></i> Limpar
+                    </a>
+                </div>
+            </form>
+            {% if filtro_sort_code_name_value or filtro_cidade_value %}
+                <p class="text-sm text-muted mt-3 mb-0">Filtro de detalhes aplicado. A paginação está desativada.</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped table-hover shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>SLS Tracking Number</th>
+                    <th>OnHoldReason</th>
+                    <th>Sort Code Name</th>
+                    <th>Postal Code (CEP)</th>
+                    <th class="text-primary">Cidade (ViaCEP)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in page_obj.object_list %}
+                <tr>
+                    <td>{{ item.sls_tracking_number }}</td>
+                    <td>{{ item.onhold_reason }}</td>
+                    <td>{{ item.sort_code_name }}</td>
+                    <td>{{ item.postal_code }}</td>
+                    <td class="text-primary">
+                        <i class="fas fa-city me-2"></i> {{ item.cidade }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">Nenhum pacote encontrado para o filtro.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <nav aria-label="Paginação">
+        <ul class="pagination justify-content-center">
+            {% with pagina_url="&data_inicio=" filter_url="&sort_code_name="%}
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page=1{{ pagina_url }}{{ data_inicio_str }}&data_fim={{ data_fim_str }}{{ filter_url }}{{ filtro_sort_code_name_value }}&cidade={{ filtro_cidade_value }}">Primeira</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{{ pagina_url }}{{ data_inicio_str }}&data_fim={{ data_fim_str }}{{ filter_url }}{{ filtro_sort_code_name_value }}&cidade={{ filtro_cidade_value }}">Anterior</a></li>
+            {% endif %}
+
+            <li class="page-item disabled"><span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{{ pagina_url }}{{ data_inicio_str }}&data_fim={{ data_fim_str }}{{ filter_url }}{{ filtro_sort_code_name_value }}&cidade={{ filtro_cidade_value }}">Próxima</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{{ pagina_url }}{{ data_inicio_str }}&data_fim={{ data_fim_str }}{{ filter_url }}{{ filtro_sort_code_name_value }}&cidade={{ filtro_cidade_value }}">Última</a></li>
+            {% endif %}
+            {% endwith %}
+        </ul>
+    </nav>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}{{ titulo }}{% endblock %}
+
+{% block custom_styles %}
+<style>
+    /* Estilo básico para os Cards/KPIs */
+    .kpi-card {
+        border-radius: 10px;
+        transition: transform 0.2s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .kpi-card:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid">
+    <div class="row mb-5 align-items-center">
+        <div class="col-md-9">
+            <h1><i class="fas fa-chart-line"></i> Painel de Desempenho</h1>
+            <p class="lead">Dados consolidados para **{{ apresentacao.data_apresentacao|date:"d/m/Y" }}**.</p>
+        </div>
+        <div class="col-md-3 text-end">
+            <a href="{% url 'apresentacao:editar_apresentacao' pk=apresentacao.pk %}" class="btn btn-warning btn-lg me-2">
+                <i class="fas fa-edit"></i> Editar Painel
+            </a>
+             <a href="{% url 'apresentacao:selecionar_apresentacao' %}" class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+    
+    {% for topico in topicos %}
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-dark text-white">
+                    <h4 class="mb-0">{{ topico.ordem }}. {{ topico.titulo }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        
+                        {# Itera sobre os Cards (KPIs) dentro deste Tópico #}
+                        {% for card in topico.cards.all %}
+                            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
+                                <div class="card text-white bg-{{ card.cor }} kpi-card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ card.titulo }}</h5>
+                                        <h1 class="card-text fw-bold">{{ card.valor_formatado }}</h1>
+                                        {% if card.valor %}
+                                            <p class="small text-end m-0">Valor numérico: {{ card.valor }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="col-12 text-muted">Nenhum Card (KPI) cadastrado para este tópico.</div>
+                        {% endfor %}
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12 text-center">
+            <div class="alert alert-info">
+                Nenhum tópico cadastrado para esta apresentação. Comece a adicionar em <a href="{% url 'apresentacao:editar_apresentacao' pk=apresentacao.pk %}" class="alert-link">Editar Painel</a>.
+            </div>
+        </div>
+    {% endfor %}
+    
+    </div>
+</div>
+{% endblock %}

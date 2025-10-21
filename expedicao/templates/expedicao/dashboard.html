@@ -1,0 +1,85 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}{{ titulo }}{% endblock %}
+
+{% block conteudo %}
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{{ titulo }}</h5>
+        <div>
+            {# NOVO BOTÃO: Voltar para o Dashboard Principal #}
+            <a href="/" class="btn btn-secondary btn-sm me-2">
+                <i class="fas fa-home"></i> Dashboard Principal
+            </a>
+            <a href="{% url 'expedicao:upload' %}" class="btn btn-light btn-sm">
+                <i class="fas fa-upload"></i> Novo Upload
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        
+        {# NOVO: Formulário de Filtro por Data #}
+        <form method="GET" class="mb-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="data_inicio" class="form-label">Data de Envio (Início)</label>
+                    <input type="date" class="form-control" id="data_inicio" name="data_inicio" value="{{ data_inicio_selecionada }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="data_fim" class="form-label">Data de Envio (Fim)</label>
+                    <input type="date" class="form-control" id="data_fim" name="data_fim" value="{{ data_fim_selecionada }}">
+                </div>
+                <div class="col-md-auto">
+                    <button type="submit" class="btn btn-info">
+                        <i class="fas fa-filter me-1"></i> Filtrar
+                    </button>
+                    <a href="{% url 'expedicao:dashboard' %}" class="btn btn-outline-secondary">
+                        Limpar Filtro
+                    </a>
+                </div>
+            </div>
+        </form>
+        {# FIM DO FILTRO #}
+        
+        {% if arquivos %}
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Nome do Arquivo</th> 
+                    <th>Registros</th>
+                    <th>Enviado Por</th>
+                    <th>Data de Referência</th>
+                    <th>Data de Envio</th> {# Adicionado Data de Envio #}
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for arquivo in arquivos %}
+                <tr>
+                    <td>LMHUb_Audit_{{ arquivo.data_referencia|date:"d-m-Y" }}</td> 
+                    
+                    <td>{{ arquivo.num_registros }}</td>
+                    <td>{{ arquivo.enviado_por.username|default:'(Sistema)' }}</td>
+                    
+                    <td>{{ arquivo.data_referencia|date:"d/m/Y" }}</td>
+                    <td>{{ arquivo.data_envio|date:"d/m/Y H:i" }}</td> {# Exibe a Data de Envio #}
+                    
+                    <td>
+                        {# ATUALIZADO: Link para a nova view de Detalhes #}
+                        <a href="{% url 'expedicao:detalhes' pk=arquivo.pk %}" class="btn btn-sm btn-info">
+                            <i class="fas fa-search me-1"></i> Detalhes
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="alert alert-info" role="alert">
+            Nenhum arquivo de expedição foi encontrado com os filtros aplicados.
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock conteudo %}

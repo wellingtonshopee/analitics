@@ -1,0 +1,69 @@
+{% extends 'core/base.html' %} 
+{% load static %}
+{% load crispy_forms_tags %} {# Adicione se você usa django-crispy-forms para estilizar #}
+
+{% block title %}Resumo do HUB{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    
+    <div class="row">
+        <div class="col-12">
+            <h1>Resumo do HUB</h1>
+            <p class="lead">Visão consolidada das principais métricas do HUB {{ usuario_hub }}.</p>
+        </div>
+    </div>
+    
+    <div class="row mb-4 p-3 bg-light border rounded shadow-sm">
+        <div class="col-12">
+            <form method="get" class="row align-items-end g-3">
+                
+                {% for field in form %}
+                    <div class="col-md-3 col-lg-2">
+                        {{ field.label_tag }}
+                        {{ field }}
+                    </div>
+                {% endfor %}
+                
+                <div class="col-md-3 col-lg-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter"></i> Aplicar Filtros
+                    </button>
+                </div>
+                
+                {% if form.data_inicio.value or form.data_fim.value %}
+                <div class="col-md-3 col-lg-2">
+                    <a href="{% url 'dashboard_apresentacao' %}" class="btn btn-outline-secondary w-100">
+                        Limpar Filtros
+                    </a>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    Dados Filtrados (Exemplo)
+                </div>
+                <div class="card-body">
+                    <p><strong>Data Início:</strong> {{ data_inicio_str|default:'N/A' }}</p>
+                    <p><strong>Data Fim:</strong> {{ data_fim_str|default:'N/A' }}</p>
+                    <p><strong>Usuário Logado:</strong> {{ usuario.username }}</p>
+                    <p><strong>HUB Vinculado:</strong> <span class="badge bg-secondary">{{ usuario_hub }}</span></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar para Dashboard Principal</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

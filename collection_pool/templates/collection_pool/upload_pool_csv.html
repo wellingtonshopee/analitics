@@ -1,0 +1,66 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}Upload de Dados Collection Pool{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    <h1 class="mb-4">Upload de Arquivo Collection Pool</h1>
+
+    {# BLOCO PARA EXIBIR MENSAGENS DE ERRO OU SUCESSO #}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    {# FIM DO BLOCO DE MENSAGENS #}
+
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Importação de Dados Collection Pool</h5>
+        </div>
+        <div class="card-body">
+            
+            {# Ação aponta para a view de upload correta: 'upload_pool_csv' #}
+            <form method="POST" action="{% url 'upload_pool_csv' %}" enctype="multipart/form-data" class="row g-3">
+                {% csrf_token %}
+
+                {# Data de Referência (data_envio_arquivo) #}
+                <div class="col-md-6">
+                    <label for="{{ form.data_envio_arquivo.id_for_label }}" class="form-label fw-bold">{{ form.data_envio_arquivo.label }} (Obrigatório)</label>
+                    {# O widget deve renderizar o input corretamente, assumindo a classe 'form-control' #}
+                    {{ form.data_envio_arquivo }}
+                    <div class="form-text">{{ form.data_envio_arquivo.help_text }}</div>
+                    {% if form.data_envio_arquivo.errors %}
+                        <div class="alert alert-danger mt-1">{{ form.data_envio_arquivo.errors }}</div>
+                    {% endif %}
+                </div>
+
+                {# Arquivo CSV (arquivo_csv) #}
+                <div class="col-md-6">
+                    <label for="{{ form.arquivo_csv.id_for_label }}" class="form-label fw-bold">{{ form.arquivo_csv.label }}</label>
+                    {# Adicionando a classe 'form-control' para garantir o estilo Bootstrap #}
+                    {{ form.arquivo_csv }}
+                    <div class="form-text">{{ form.arquivo_csv.help_text }}</div>
+                    {% if form.arquivo_csv.errors %}
+                        <div class="alert alert-danger mt-1">{{ form.arquivo_csv.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-12 mt-4">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fas fa-upload me-2"></i> Iniciar Upload e Processamento
+                    </button>
+                    {# Botão Voltar #}
+                    <a href="{% url 'menu_pool' %}" class="btn btn-secondary btn-lg ms-3">
+                        <i class="fas fa-arrow-left me-2"></i> Voltar ao Menu
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

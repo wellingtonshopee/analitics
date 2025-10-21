@@ -1,0 +1,44 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}Detalhes - {{ driver_name }}{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    <a href="{% url 'dashboard_onhold' %}" class="btn btn-secondary mb-3">
+        <i class="fas fa-arrow-left me-1"></i> Voltar ao Dashboard
+    </a>
+    
+    <h1 class="mb-4">
+        Rastreios OnHold do Motorista
+        <span class="text-primary">{{ driver_name }}</span>
+    </h1>
+
+    <p class="lead">
+        Período: <strong>{{ data_inicio }}</strong> a <strong>{{ data_fim }}</strong> | Total de Pacotes: <strong>{{ total_pacotes }}</strong>
+    </p>
+
+    {% if pacotes %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                                        <th>SLS Tracking Number</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pacote in pacotes %}
+                <tr>
+                                        <td>{{ pacote.sls_tracking_number }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        Nenhum pacote OnHold encontrado para o motorista **{{ driver_name }}** no período selecionado.
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

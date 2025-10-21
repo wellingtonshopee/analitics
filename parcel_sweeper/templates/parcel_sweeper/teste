@@ -1,0 +1,11 @@
+   <div class="col-md-3">
+            <div class="card kpi-card bg-soft-red text-danger h-100">
+                <div class="card-body text-center">
+                    <h6 class="fw-semibold mb-1">Itens Classificados (Lost/Damage)</h6>
+                    <h3 class="fw-bold mb-0">{{ lost_parcels_count|intcomma }}</h3>
+                    <p class="text-muted small mt-1 mb-0" style="font-size: 0.75rem;">
+                        Total de itens com `count_type` alterado pelo Módulo Lost.
+                    </p>
+                </div>
+            </div>
+        </div>

@@ -1,0 +1,130 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}Dashboard{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+
+    <!-- Cabeçalho -->
+    <div class="text-center mb-5">
+        <h1 class="fw-bold text-dark">Bem-vindo(a) ao Sistema de Logística!</h1>
+        <p class="lead text-muted">
+            Você está logado como <strong>{{ usuario.username }}</strong> 
+            e pertence ao <strong>HUB: {{ usuario_hub }}</strong>.
+        </p>
+        <hr class="w-50 mx-auto">
+    </div>
+
+    <!-- Primeira linha -->
+    <div class="row g-4">
+        <!-- Módulo ONHold -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card text-white bg-primary shadow-lg border-0 h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-pause-circle fa-3x mb-3"></i>
+                    <h5 class="card-title mb-3">Módulo ONHold</h5>
+                    <p class="card-text">Gerencie pedidos em espera e exceção.</p>
+                    <a href="{% url 'menu_onhold' %}" class="btn btn-light mt-3">Acessar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Módulo Rastreamento -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card text-white bg-success shadow-lg border-0 h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-route fa-3x mb-3"></i>
+                    <h5 class="card-title mb-3">Módulo Rastreamento de Pedidos</h5>
+                    <p class="card-text">Pesquisa e acompanhamento de pedidos.</p>
+                    <a href="{% url 'menu_rastreio' %}" class="btn btn-light mt-3">Acessar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Módulo Collection Pool -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card text-white bg-info shadow-lg border-0 h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-truck-loading fa-3x mb-3"></i>
+                    <h5 class="card-title mb-3">Módulo Collection Pool</h5>
+                    <p class="card-text">Gerenciamento de pedidos pendentes para coleta.</p>
+                    <a href="{% url 'menu_pool' %}" class="btn btn-light mt-3">Acessar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Segunda linha -->
+    <div class="row g-4 mt-2">
+        <!-- Módulo Dados Diários -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card text-white bg-dark shadow-lg border-0 h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-database fa-3x mb-3"></i>
+                    <h5 class="card-title mb-3">Módulo Dados Diários Logística</h5>
+                    <p class="card-text">Gerencie inserções e visualize KPIs agregados.</p>
+                    <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
+                        <a href="{% url 'logistica:listar_dados' %}" class="btn btn-light">
+                            <i class="fas fa-list-alt"></i> Listar/Inserir
+                        </a>
+                        <a href="{% url 'logistica:dashboard' %}" class="btn btn-outline-light">
+                            <i class="fas fa-chart-bar"></i> Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Módulo Gestão Audit -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card text-white bg-dark shadow-lg border-0 h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-audit fa-3x mb-3"></i>
+                    <h5 class="card-title mb-3">Módulo Gestão Audit</h5>
+                    <p class="card-text">Análise de arquivos de auditoria de expedição.</p>
+                    <a href="{% url 'expedicao:upload' %}" class="btn btn-light mt-3">Acessar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Módulo Perdas e Avarias -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card text-white bg-danger shadow-lg border-0 h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-box-open fa-3x mb-3"></i>
+                    <h5 class="card-title mb-3">Módulo Perdas e Avarias</h5>
+                    <p class="card-text">Acompanhe e registre ocorrências de Lost & Damage.</p>
+                    <a href="{% url 'parcel_lost:menu_actions_lost' %}" class="btn btn-light mt-3">Acessar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terceira linha -->
+    <div class="row g-4 mt-2">
+        <!-- Módulo Checagem Rápida -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card text-white bg-secondary shadow-lg border-0 h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-search fa-3x mb-3"></i>
+                    <h5 class="card-title mb-3">Módulo Checagem Rápida</h5>
+                    <p class="card-text">Compare até 1000 códigos por lista.</p>
+                    <a href="{% url 'conferencia:checagem_rapida_form' %}" class="btn btn-light mt-3">Acessar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Módulo Parcel Sweeper -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card text-dark bg-warning shadow-lg border-0 h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-broom fa-3x mb-3"></i>
+                    <h5 class="card-title mb-3">Módulo Parcel Sweeper</h5>
+                    <p class="card-text">Gerencie varreduras e consolidações de encomendas.</p>
+                    <a href="{% url 'parcel_sweeper:menu_actions_sweeper' %}" class="btn btn-dark mt-3">Acessar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

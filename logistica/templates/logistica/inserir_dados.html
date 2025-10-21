@@ -1,0 +1,157 @@
+{% extends "core/base.html" %} 
+{% load widget_tweaks %}
+
+{% block titulo %}{{ titulo }}{% endblock %}
+
+{% block conteudo %}
+<div class="container">
+    <div class="row mb-5">
+        <div class="col-12">
+            <h1><i class="fas fa-truck"></i> {{ titulo }}</h1>
+            <p class="lead">Preencha as métricas diárias de logística com base na data de envio.</p>
+        </div>
+    </div>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Informações Básicas</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="{{ form.data_envio.id_for_label }}" class="form-label">Data de Envio</label>
+                        {% render_field form.data_envio class='form-control' %}
+                        {% for error in form.data_envio.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Métricas de Produção</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Total de Rotas</label>
+                        {% render_field form.total_rotas %}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Pacotes Iniciados</label>
+                        {% render_field form.total_pacotes_iniciados %}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Pacotes Finalizados</label>
+                        {% render_field form.total_pacotes_finalizados %}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Pacotes Escaneados</label>
+                        {% render_field form.total_pacotes_escaneados %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Problemas e Desvios</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Total Missorted</label>
+                        {% render_field form.total_missorted %}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Missing Expedição</label>
+                        {% render_field form.total_missing_expedicao %}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Missing Parcel</label>
+                        {% render_field form.missing_parcel %}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Total Reversa</label>
+                        {% render_field form.total_reversa %}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">PNR</label>
+                        {% render_field form.pnr %}
+                    </div>
+                </div>
+                <hr>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Total Onhold</label>
+                        {% render_field form.total_onhold %}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Onhold Devolvidos</label>
+                        {% render_field form.onhold_devolvidos %}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Onhold a Devolver</label>
+                        {% render_field form.onhold_devolver %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Backlog e Avarias</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Volumosos No HUB</label>
+                        {% render_field form.volumosos_no_hub %}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Backlog Parcel</label>
+                        {% render_field form.backlog_parcel %}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Pedidos a Roteirizar Pool</label>
+                        {% render_field form.pedidos_roteirizar_pool %}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Backlog Agarrado (Vários dias)</label>
+                        {% render_field form.backlog_agarrado_varios_dias %}
+                    </div>
+                </div>
+                <hr>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Avaria SOC</label>
+                        {% render_field form.avaria_soc %}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Avaria HUB</label>
+                        {% render_field form.avaria_hub %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg mt-3">
+            <i class="fas fa-save"></i> Salvar Dados Diários
+        </button>
+    </form>
+</div>
+{% endblock %}

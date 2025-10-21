@@ -1,0 +1,21 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}{{ titulo_pagina }}{% endblock %}
+
+
+{% block conteudo %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="alert alert-success text-center" role="alert">
+            <h4 class="alert-heading"><i class="fas fa-check-circle me-2"></i> Upload Concluído!</h4>
+            <p>Seu arquivo foi enviado e a **Data de Referência** **{{ data_referencia }}** foi salva. O processamento iniciará em breve.</p>
+            <hr>
+            <p class="mb-0">Acompanhe o status no Dashboard.</p>
+        </div>
+        <div class="text-center">
+            <a href="{% url 'dashboard' %}" class="btn btn-primary me-2">Ir para Dashboard</a>
+            <a href="{% url 'expedicao:upload' %}" class="btn btn-outline-secondary">Novo Upload</a>
+        </div>
+    </div>
+</div>
+{% endblock conteudo %}

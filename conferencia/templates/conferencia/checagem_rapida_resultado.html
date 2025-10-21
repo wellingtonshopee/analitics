@@ -1,0 +1,72 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}{{ titulo }}{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1><i class="fas fa-check-double"></i> {{ titulo }}</h1>
+            <p class="lead">Resultados da comparação entre as listas (A: {{ total_a_origem }} itens, B: {{ total_b_origem }} itens).</p>
+            <a href="{% url 'conferencia:checagem_rapida_form' %}" class="btn btn-primary mb-3"><i class="fas fa-arrow-left"></i> Nova Checagem Rápida</a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        
+        <div class="col-md-4">
+            <div class="card border-primary">
+                <div class="card-header text-white bg-primary">
+                    <i class="fas fa-exclamation-triangle"></i> Somente na Lista A (Azul) 
+                    <span class="badge bg-light text-dark float-end">{{ count_a }} itens</span>
+                </div>
+                <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                    <ul class="list-group list-group-flush">
+                        {% for codigo in somente_a_list %}
+                            <li class="list-group-item list-group-item-primary text-primary border-primary border-start border-3">{{ codigo }}</li>
+                        {% empty %}
+                            <li class="list-group-item text-center">Nenhum item encontrado somente na Lista A.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card border-danger">
+                <div class="card-header text-white bg-danger">
+                    <i class="fas fa-times-circle"></i> Somente na Lista B (Vermelho)
+                    <span class="badge bg-light text-dark float-end">{{ count_b }} itens</span>
+                </div>
+                <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                    <ul class="list-group list-group-flush">
+                        {% for codigo in somente_b_list %}
+                            <li class="list-group-item list-group-item-danger text-danger border-danger border-start border-3">{{ codigo }}</li>
+                        {% empty %}
+                            <li class="list-group-item text-center">Nenhum item encontrado somente na Lista B.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-success">
+                <div class="card-header text-white bg-success">
+                    <i class="fas fa-check-circle"></i> Presente em Ambas (Verde)
+                    <span class="badge bg-light text-dark float-end">{{ count_ambas }} itens</span>
+                </div>
+                <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                    <ul class="list-group list-group-flush">
+                        {% for codigo in presente_em_ambas_list %}
+                            <li class="list-group-item list-group-item-success text-success border-success border-start border-3">{{ codigo }}</li>
+                        {% empty %}
+                            <li class="list-group-item text-center">Nenhum item em comum encontrado.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

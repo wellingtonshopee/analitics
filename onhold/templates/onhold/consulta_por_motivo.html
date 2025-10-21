@@ -1,0 +1,85 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}Consulta por Motivo{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid">
+    <h1 class="mb-4">Pacotes Retidos - Detalhe por Motivo</h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-danger text-white">
+            <h4 class="mb-0">Motivo: {{ motivo_selecionado }}</h4>
+        </div>
+        <div class="card-body">
+            <p class="lead">Total de Pacotes Encontrados: <strong>{{ total_pacotes }}</strong></p>
+            
+            <div class="d-flex mb-3">
+                <a href="{% url 'dashboard_onhold' %}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-arrow-left me-1"></i> Voltar ao Dashboard
+                </a>
+                
+                <a href="{% url 'export_por_motivo_csv' motivo=motivo_selecionado %}?status={{ status_selecionado }}" 
+                   class="btn btn-success">
+                    <i class="fas fa-file-csv me-1"></i> Exportar CSV ({{ total_pacotes }})
+                </a>
+            </div>
+            <form method="get" class="row g-3 align-items-end mb-4 border p-3 rounded bg-light">
+                <div class="col-md-4">
+                    <label for="status_filtro" class="form-label fw-bold">Filtrar por Status:</label>
+                    <select class="form-select" id="status_filtro" name="status">
+                        {% for status in opcoes_status %}
+                            <option value="{{ status }}" {% if status == status_selecionado %}selected{% endif %}>
+                                {{ status }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-1"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+            {% if pacotes %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>SLS Tracking Number</th>
+                                <th>Data Retenção</th>
+                                <th>Status Atual</th>
+                                
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pacote in pacotes %}
+                            <tr>
+                                <td><span class="fw-bold text-primary">{{ pacote.sls_tracking_number }}</span></td>
+                                
+                                <td>{{ pacote.onhold_time|date:"d/m/Y" }}</td>
+                                
+                                <td>
+                                    {% if pacote.status == 'OnHold' %}
+                                        <span class="badge bg-danger">{{ pacote.status }}</span>
+                                    {% elif pacote.status == 'LMHub_Received' %}
+                                        <span class="badge bg-success">{{ pacote.status }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ pacote.status }}</span>
+                                    {% endif %}
+                                </td>
+                                
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    Nenhum pacote encontrado com o motivo "{{ motivo_selecionado }}" e status "{{ status_selecionado }}".
+                </div>
+            {% endif %}
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

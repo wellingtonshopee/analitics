@@ -1,0 +1,69 @@
+{% extends "core/base.html" %}
+{% load widget_tweaks %}
+
+{% block titulo %}{{ titulo }}{% endblock %}
+
+{% block conteudo %}
+<div class="container">
+    <div class="row mb-5">
+        <div class="col-12">
+            <h1><i class="fas fa-calendar-alt"></i> {{ titulo }}</h1>
+            <p class="lead">Selecione ou crie um painel de apresentação pela data.</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Criar Novo Painel</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.data_apresentacao.id_for_label }}" class="form-label">Data de Referência</label>
+                            {# O formset_factory já aplica 'form-control' no forms.py #}
+                            {% render_field form.data_apresentacao %} 
+                            {% for error in form.data_apresentacao.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger mt-2">{{ form.non_field_errors }}</div>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Criar e Editar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Painéis Existentes (Recentes)</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for ap in apresentacoes %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Painel da Data: **{{ ap.data_apresentacao|date:"d/m/Y" }}**
+                            <div>
+                                <a href="{% url 'apresentacao:detalhe_apresentacao' pk=ap.pk %}" class="btn btn-sm btn-outline-primary me-2">
+                                    <i class="fas fa-eye"></i> Visualizar
+                                </a>
+                                <a href="{% url 'apresentacao:editar_apresentacao' pk=ap.pk %}" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                            </div>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-center text-muted">Nenhuma apresentação encontrada.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

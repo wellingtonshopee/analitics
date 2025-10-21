@@ -1,0 +1,52 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}Login no Sistema{% endblock %}
+
+{% block conteudo %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white text-center">
+                <h4 class="mb-0">Acesso ao Sistema Logística</h4>
+            </div>
+            <div class="card-body">
+                
+                {% if form.errors %}
+                    <div class="alert alert-danger" role="alert">
+                        Seu nome de usuário e/ou senha estão incorretos. Por favor, tente novamente.
+                    </div>
+                {% endif %}
+
+                {% if next %}
+                    {% if user.is_authenticated %}
+                        <div class="alert alert-warning" role="alert">
+                            Sua conta não tem acesso a esta página. Para continuar, faça login com uma conta que tenha.
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info" role="alert">
+                            Por favor, faça o login para ver esta página.
+                        </div>
+                    {% endif %}
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.username.id_for_label }}" class="form-label">Usuário:</label>
+                        {{ form.username }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.password.id_for_label }}" class="form-label">Senha:</label>
+                        {{ form.password }}
+                    </div>
+                    
+                    <input type="hidden" name="next" value="{{ next }}">
+                    <button type="submit" class="btn btn-primary w-100">Entrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

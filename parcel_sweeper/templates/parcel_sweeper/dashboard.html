@@ -1,0 +1,370 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load humanize %}
+{% load templatefilters %}
+
+{% block titulo %}Dashboard - Parcel Sweeper{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    <h1 class="mb-4">Dashboard - Parcel Sweeper</h1>
+
+    <div class="d-flex justify-content-end mb-3">
+        <form method="POST" action="{% url 'parcel_sweeper:update_lost_status' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-warning">
+                <i class="fas fa-sync-alt me-2"></i> Executar Sincronização Lost
+            </button>
+        </form>
+    </div>
+    
+    <div class="card shadow mb-4 border-0">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end" action="{% url 'parcel_sweeper:dashboard' %}">
+                <div class="col-md-3">
+                    <label for="{{ form.data_inicio.id_for_label }}" class="form-label">De:</label>
+                    {{ form.data_inicio }}
+                </div>
+                <div class="col-md-3">
+                    <label for="{{ form.data_fim.id_for_label }}" class="form-label">Até:</label>
+                    {{ form.data_fim }}
+                </div>
+                <div class="col-md-3">
+                    <label for="{{ form.final_status.id_for_label }}" class="form-label">{{ form.final_status.label }}:</label>
+                    {{ form.final_status }}
+                </div>
+                <div class="col-md-3">
+                    <label for="{{ form.sort_code.id_for_label }}" class="form-label">{{ form.sort_code.label }}:</label>
+                    {{ form.sort_code }}
+                </div>
+
+                <div class="col-md-12 text-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-filter me-1"></i> Aplicar Filtro
+                    </button>
+                    <a href="{% url 'parcel_sweeper:dashboard' %}" class="btn btn-secondary">Limpar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <h2 class="mt-4 mb-3"> Análise de Métricas Parcel Sweeper(Data: <strong>{{ data_inicio_str }}</strong> a <strong>{{ data_fim_str }}</strong>)</h2>
+    <div class="row mb-4">
+        
+        <div class="col-md-3">
+            {# KPI AJUSTADO: Total de Registros - Agora Clicável #}
+            {% url 'parcel_sweeper:detail_list' count_type_slug='total-registros' as total_registros_url %}
+            <a href="{{ total_registros_url }}?name=Total de Registros{% if filter_params %}&{{ filter_params }}{% endif %}" 
+                class="card kpi-card bg-primary-gradient text-white h-100 text-decoration-none">
+                <div class="card-body text-center">
+                    <h6 class="fw-semibold mb-1">Total de Registros</h6>
+                    <h3 class="fw-bold mb-0">{{ total_registros|intcomma }}</h3>
+                </div>
+            </a>
+            {# FIM DO AJUSTE #}
+        </div>
+        
+    </div>
+
+    <hr>
+
+    <h2 class="mt-4 mb-3">Análise Relatório Parcel Sweeper (Final Status)</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3 mb-4">
+        {% for kpi in kpis_final_status %}
+            {% with status_name=kpi.final_status|default:"Status Vazio" %}
+                {% url 'parcel_sweeper:status_detail_list' final_status_slug=status_name|slugify as detail_url %}
+                
+                {# LMHub_Packed -> Reversa - Aguardando coleta (Cinza Claro/Vermelho) #}
+                {% if status_name == 'LMHub_Packed' %}
+                    {% with card_class='bg-lightgray text-danger' title='Reversa - Aguardando coleta' %}
+                        <div class="col">
+                            <a href="{{ detail_url }}?name={{ status_name|urlencode }}{% if filter_params %}&{{ filter_params }}{% endif %}" class="card kpi-card {{ card_class }} text-decoration-none h-100">
+                                <div class="card-body p-3 text-center">
+                                    <p class="fw-semibold mb-1" style="font-size: 0.85rem;">{{ title }}</p>
+                                    <h3 class="fw-bold mb-0">{{ kpi.total|intcomma }}</h3>
+                                </div>
+                            </a>
+                        </div>
+                    {% endwith %}
+
+                {# LMHub_Received -> Recebido no HUB (Azul Suave) #}
+                {% elif status_name == 'LMHub_Received' %}
+                    {% with card_class='bg-soft-blue text-primary' title='Recebido no HUB' %}
+                        <div class="col">
+                            <a href="{{ detail_url }}?name={{ status_name|urlencode }}{% if filter_params %}&{{ filter_params }}{% endif %}" class="card kpi-card {{ card_class }} text-decoration-none h-100">
+                                <div class="card-body p-3 text-center">
+                                    <p class="fw-semibold mb-1" style="font-size: 0.85rem;">{{ title }}</p>
+                                    <h3 class="fw-bold mb-0">{{ kpi.total|intcomma }}</h3>
+                                </div>
+                            </a>
+                        </div>
+                    {% endwith %}
+
+                {# SOC_LHTransported -> Recebido no HUB - Não processado (Amarelo Suave) #}
+                {% elif status_name == 'SOC_LHTransported' %}
+                    {% with card_class='bg-soft-yellow text-dark' title='Não processado' %}
+                        <div class="col">
+                            <a href="{{ detail_url }}?name={{ status_name|urlencode }}{% if filter_params %}&{{ filter_params }}{% endif %}" class="card kpi-card {{ card_class }} text-decoration-none h-100">
+                                <div class="card-body p-3 text-center">
+                                    <p class="fw-semibold mb-1" style="font-size: 0.85rem;">{{ title }}</p>
+                                    <h3 class="fw-bold mb-0">{{ kpi.total|intcomma }}</h3>
+                                </div>
+                            </a>
+                        </div>
+                    {% endwith %}
+
+                {# Return_LMHub_Packed -> Retorno - Aguardando Coleta (Cinza Escuro) #}
+                {% elif status_name == 'Return_LMHub_Packed' %}
+                    {% with card_class='bg-darkgray text-white' title='Retorno - Aguardando Coleta' %}
+                        <div class="col">
+                            <a href="{{ detail_url }}?name={{ status_name|urlencode }}{% if filter_params %}&{{ filter_params }}{% endif %}" class="card kpi-card {{ card_class }} text-decoration-none h-100">
+                                <div class="card-body p-3 text-center">
+                                    <p class="fw-semibold mb-1" style="font-size: 0.85rem;">{{ title }}</p>
+                                    <h3 class="fw-bold mb-0">{{ kpi.total|intcomma }}</h3>
+                                </div>
+                            </a>
+                        </div>
+                    {% endwith %}
+
+                {# Liquidate_Packed -> Liquidado - Finalizado (Laranja Suave) #}
+                {% elif status_name == 'Liquidate_Packed' %}
+                    {% with card_class='bg-soft-orange text-dark' title='Liquidado - Finalizado' %}
+                        <div class="col">
+                            <a href="{{ detail_url }}?name={{ status_name|urlencode }}{% if filter_params %}&{{ filter_params }}{% endif %}" class="card kpi-card {{ card_class }} text-decoration-none h-100">
+                                <div class="card-body p-3 text-center">
+                                    <p class="fw-semibold mb-1" style="font-size: 0.85rem;">{{ title }}</p>
+                                    <h3 class="fw-bold mb-0">{{ kpi.total|intcomma }}</h3>
+                                </div>
+                            </a>
+                        </div>
+                    {% endwith %}
+
+                {# Return_LMHub_Received -> Retorno recebido no HUB para entrega (Verde Suave) #}
+                {% elif status_name == 'Return_LMHub_Received' %}
+                    {% with card_class='bg-soft-green text-success' title='Retorno recebido no HUB para entrega' %}
+                        <div class="col">
+                            <a href="{{ detail_url }}?name={{ status_name|urlencode }}{% if filter_params %}&{{ filter_params }}{% endif %}" class="card kpi-card {{ card_class }} text-decoration-none h-100">
+                                <div class="card-body p-3 text-center">
+                                    <p class="fw-semibold mb-1" style="font-size: 0.85rem;">{{ title }}</p>
+                                    <h3 class="fw-bold mb-0">{{ kpi.total|intcomma }}</h3>
+                                </div>
+                            </a>
+                        </div>
+                    {% endwith %}
+
+                {# PADRÃO para outros status #}
+                {% else %}
+                    {% with card_class='bg-light text-secondary' title=status_name %}
+                        <div class="col">
+                            <a href="{{ detail_url }}?name={{ status_name|urlencode }}{% if filter_params %}&{{ filter_params }}{% endif %}" class="card kpi-card {{ card_class }} text-decoration-none h-100">
+                                <div class="card-body p-3 text-center">
+                                    <p class="fw-semibold mb-1" style="font-size: 0.85rem;">{{ title }}</p>
+                                    <h3 class="fw-bold mb-0">{{ kpi.total|intcomma }}</h3>
+                                </div>
+                            </a>
+                        </div>
+                    {% endwith %}
+                {% endif %}
+
+            {% endwith %}
+        {% empty %}
+            <div class="col-12"><div class="alert alert-info">Nenhum dado de Final Status encontrado para o período.</div></div>
+        {% endfor %}
+    </div>
+
+    <hr>
+
+    <h2 class="mt-4 mb-3">Análise de KPIs - Missing Lost e Damage </h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3 mb-4">
+        <div class="col">
+            {% url 'parcel_sweeper:detail_list' count_type_slug='missing-no-hub' as missing_hub_url %}
+            <a href="{{ missing_hub_url }}?name=Missing no HUB{% if filter_params %}&{{ filter_params }}{% endif %}" 
+                class="card kpi-card bg-soft-yellow text-dark h-100 text-decoration-none">
+                <div class="card-body p-3 text-center">
+                    <p class="fw-semibold mb-1" style="font-size: 0.85rem;">Missing no HUB</p>
+                    <h3 class="fw-bold mb-0">{{ kpi_missing_hub|intcomma }}</h3>
+                    <p class="mt-2 text-muted" style="font-size: 0.75rem;">(Missing &amp; LMHub_Received)</p>
+                </div>
+            </a>
+        </div>
+
+        <div class="col">
+            {% url 'parcel_sweeper:detail_list' count_type_slug='missing-nao-recebidos-no-hub' as missing_nao_hub_url %}
+            <a href="{{ missing_nao_hub_url }}?name=Missing Não recebidos no HUB{% if filter_params %}&{{ filter_params }}{% endif %}" 
+                class="card kpi-card bg-soft-red text-danger h-100 text-decoration-none">
+                <div class="card-body p-3 text-center">
+                    <p class="fw-semibold mb-1" style="font-size: 0.85rem;">Pacotes Não Recebidos no HUB</p>
+                    <h3 class="fw-bold mb-0">{{ missing_nao_hub_count|intcomma }}</h3>
+                    <p class="mt-2 text-muted" style="font-size: 0.75rem;">(Missing &amp; Não LMHub_Received)</p>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col">
+            {% url 'parcel_sweeper:detail_list' count_type_slug='lost-damage' as lost_damage_url %}
+            <a href="{{ lost_damage_url }}?name=Lost &amp; Damage Total{% if filter_params %}&{{ filter_params }}{% endif %}" 
+                class="card kpi-card bg-soft-orange text-dark h-100 text-decoration-none">
+                <div class="card-body p-3 text-center">
+                    <p class="fw-semibold mb-1" style="font-size: 0.85rem;">Lost &amp; Damage Total</p>
+                    <h3 class="fw-bold mb-0">{{ lost_parcels_count|intcomma }}</h3>
+                    <p class="mt-2 text-muted" style="font-size: 0.75rem;">(LOST ou DAMAGE Recebidos no HUB)</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <hr>
+
+    <h2 class="mt-4 mb-3">Análise de KPIs por Count Type Parcel Sweeper</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3 mb-4">
+        {% for kpi in kpis_count_type %}
+            {% url 'parcel_sweeper:detail_list' count_type_slug=kpi.count_type|slugify as ct_detail_url %}
+            <div class="col">
+                <a href="{{ ct_detail_url }}?name={{ kpi.count_type|urlencode }}{% if filter_params %}&{{ filter_params }}{% endif %}" 
+                    class="card kpi-card shadow-sm h-100 text-decoration-none">
+                    <div class="card-body p-3">
+                        <p class="mb-0 text-muted" style="font-size: 0.85rem; line-height: 1.1;">Count Type:</p>
+                        <p class="h5 fw-bold mb-1" style="font-size: 1.05rem;">{{ kpi.count_type|default:"(Vazio)" }}</p>
+                        <div class="fw-bold text-primary" style="font-size: 1.25rem;">{{ kpi.total|intcomma }}</div>
+                    </div>
+                </a>
+            </div>
+        {% empty %}
+            <div class="col-12"><div class="alert alert-info">Nenhum dado de Count Type encontrado.</div></div>
+        {% endfor %}
+    </div>
+
+    <hr>
+
+    <h2 class="mt-4 mb-3">Análise de KPIs - Backlog Parcel Sweeper</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3 mb-4">
+        <div class="col">
+            {# KPI AJUSTADO: Backlog Total Registrado - Agora Clicável #}
+            {% url 'parcel_sweeper:detail_list' count_type_slug='backlog-total' as backlog_total_url %}
+            <a href="{{ backlog_total_url }}?name=Backlog Total Registrado{% if filter_params %}&{{ filter_params }}{% endif %}" 
+                class="card kpi-card bg-secondary text-white h-100 text-decoration-none">
+                <div class="card-body text-center p-3">
+                    <p class="mb-1">Backlog Total Registrado</p>
+                    <h3 class="fw-bold mb-0">{{ backlog_total|intcomma }}</h3>
+                    <p class="card-text mt-2" style="font-size: 0.75rem;">Backlog</p>
+                </div>
+            </a>
+            {# FIM DO AJUSTE #}
+        </div>
+
+        <div class="col">
+            {# KPI AJUSTADO: Backlog - Status Process for delivery - Agora Clicável #}
+            {% url 'parcel_sweeper:detail_list' count_type_slug='backlog-process-for-delivery' as backlog_green_url %}
+            <a href="{{ backlog_green_url }}?name=Backlog - Status Process for delivery{% if filter_params %}&{{ filter_params }}{% endif %}"
+                class="card kpi-card bg-soft-green text-success h-100 text-decoration-none">
+                <div class="card-body text-center p-3">
+                    <p class="mb-1">Backlog - Status Process for delivery</p>
+                    <h3 class="fw-bold mb-0">{{ backlog_green_count|intcomma }}</h3>
+                    <p class="mt-2" style="font-size: 0.75rem;"></p>
+                </div>
+            </a>
+            {# FIM DO AJUSTE #}
+        </div>
+
+        <div class="col">
+            {# KPI AJUSTADO: Backlog Agarrado no HUB - Vários dias - Agora Clicável #}
+            {% url 'parcel_sweeper:detail_list' count_type_slug='backlog-stuck-hub' as backlog_red_url %}
+            <a href="{{ backlog_red_url }}?name=Backlog Agarrado no HUB - Vários dias{% if filter_params %}&{{ filter_params }}{% endif %}"
+                class="card kpi-card bg-soft-red text-danger h-100 text-decoration-none">
+                <div class="card-body text-center p-3">
+                    <p class="mb-1">Backlog Agarrado no HUB - Vários dias</p>
+                    <h3 class="fw-bold mb-0">{{ backlog_red_count|intcomma }}</h3>
+                    <p class="mt-2" style="font-size: 0.75rem;"></p>
+                </div>
+            </a>
+            {# FIM DO AJUSTE #}
+        </div>
+        <div class="col">
+            {# KPI AJUSTADO: Pacotes Roteirizados mais de uma Vez - Estrutura de link padronizada #}
+            {% url 'parcel_sweeper:detail_list' count_type_slug='backlog-onhold-times-0' as backlog_onhold_url %}
+            <a href="{{ backlog_onhold_url }}?name=Pacotes Roteirizados mais de uma Vez{% if filter_params %}&{{ filter_params }}{% endif %}" 
+                class="card kpi-card bg-info text-dark h-100 text-decoration-none">
+                <div class="card-body text-center p-3">
+                    <p class="mb-1">Pacotes Roteirizados mais de uma Vez</p>
+                    <h3 class="fw-bold mb-0">{{ backlog_onhold_nonzero_count|intcomma }}</h3>
+                    <p class="mt-2" style="font-size: 0.75rem;">Pacotes que já passaram no Parcel e retornaram para nova roterização</p>
+                </div>
+            </a>
+            {# FIM DO AJUSTE #}
+        </div>
+    </div>
+
+    <hr>
+
+    <h2 class="mt-4 mb-3">Análise de KPIs - Expedite Tag Parcel Sweeper</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3 mb-4">
+        {% for kpi in kpis_expedite_tag %}
+            {% if kpi.expedite_tag %} {# <--- VERIFICAÇÃO ADICIONADA AQUI: só exibe se expedite_tag tiver um valor (não vazio/nulo) #}
+            {# Adicionando o link para detalhamento dos KPIs por Expedite Tag #}
+            {% url 'parcel_sweeper:detail_list' count_type_slug='expedite-tag-detail' as et_detail_url %}
+            <div class="col">
+                <a href="{{ et_detail_url }}?expedite_tag_name={{ kpi.expedite_tag|urlencode }}{% if filter_params %}&{{ filter_params }}{% endif %}" 
+                    class="card kpi-card shadow-sm h-100 text-decoration-none">
+                    <div class="card-body p-3">
+                        <p class="card-title text-muted mb-0" style="font-size: 0.85rem; line-height: 1.1;">Expedite Tag:</p>
+                        <p class="h5 fw-bold mb-1" style="font-size: 1.05rem;">{{ kpi.expedite_tag }}</p>
+                        <div class="fw-bold text-warning" style="font-size: 1.25rem;">{{ kpi.total|intcomma }}</div>
+                    </div>
+                </a>
+            </div>
+            {% endif %} {# <--- FIM DA CONDIÇÃO #}
+        {% empty %}
+            <div class="col-12"><div class="alert alert-info">Nenhum dado de Expedite Tag encontrado.</div></div>
+        {% endfor %}
+    </div>
+
+</div> {# container-fluid end #}
+
+<style>
+    /* Estrutura dos cards KPI */
+    .kpi-card {
+        border: none;
+        border-radius: 0.75rem;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .kpi-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 22px rgba(0,0,0,0.10);
+    }
+
+    /* Gradiente destaque */
+    .bg-primary-gradient {
+        background: linear-gradient(135deg, #0d6efd 0%, #7fbfff 100%);
+    }
+
+    /* Paleta suave (pastel) para KPI - fundos claros */
+    .bg-soft-blue { background-color: #a2d4f8 !important; }   /* azul claro */
+    .bg-soft-green { background-color: #45f045 !important; }  /* verde claro */
+    .bg-soft-yellow { background-color: #f8dc76 !important; } /* amarelo claro */
+    .bg-soft-orange { background-color: #e7a445 !important; } /* laranja claro */
+    .bg-soft-red { background-color: #f08787 !important; }    /* vermelho claro */
+    .bg-lightgray { background-color: #d2d2d3 !important; }   /* cinza claro */
+    .bg-darkgray { background-color: #3f4650 !important; }    /* cinza escuro */
+
+    /* Forçar contraste de texto quando necessário */
+    .text-dark { color: #212529 !important; }
+    .text-white { color: #ffffff !important; }
+    .text-danger { color: #2d0101 !important; } /* Vermelho mais escuro para contraste */
+    .text-primary { color: #0d47a1 !important; }
+    .text-success { color: #1b5e20 !important; }
+    .text-warning { color: #b08900 !important; } /* amarelo/aviso */
+
+    /* Ajustes menores */
+    hr {
+        border: 0;
+        border-top: 1px solid #e9ecef;
+        margin: 1.75rem 0;
+    }
+
+    /* Garantir que links em cards não mudem cor do número (respeitar classes text-*) */
+    .kpi-card a { text-decoration: none; }
+    .kpi-card .card-body p, .kpi-card .card-body h3 { margin: 0; }
+</style>
+
+{% endblock %}

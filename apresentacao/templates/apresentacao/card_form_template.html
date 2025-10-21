@@ -1,0 +1,39 @@
+{% load widget_tweaks %} 
+
+<template id="empty-card-form-template">
+    <div class="card card-editor h-100">
+        <div class="card-body p-2">
+            <div class="mb-2">
+                <label class="form-label small mb-0">Título:</label>
+                {# SEM PREFIX AQUI #}
+                {% render_field form.titulo class='form-control form-control-sm' %} 
+            </div>
+            <div class="mb-2">
+                <label class="form-label small mb-0">Valor Exibição:</label>
+                {# SEM PREFIX AQUI #}
+                {% render_field form.valor_formatado class='form-control form-control-sm' %}
+            </div>
+            <div class="mb-2">
+                <label class="form-label small mb-0">Cor:</label>
+                {# SEM PREFIX AQUI #}
+                {% render_field form.cor class='form-select form-select-sm' %}
+            </div>
+            <div class="row g-2">
+                <div class="col-4">
+                    <label class="form-label small mb-0">Ordem:</label>
+                    {# SEM PREFIX AQUI #}
+                    {% render_field form.ordem class='form-control form-control-sm' %}
+                </div>
+                <div class="col-8 d-flex align-items-end">
+                    <button type="button" class="btn btn-sm btn-outline-danger w-100 delete-card-btn" data-card-prefix="card-__topico_prefix__-__card_prefix__">
+                        <i class="fas fa-times"></i> Excluir
+                    </button>
+                    {% render_field form.DELETE %}
+                </div>
+            </div>
+            {# Campos Hidden #}
+            {% render_field form.id %}
+            {% render_field form.valor %}
+        </div>
+    </div>
+</template>

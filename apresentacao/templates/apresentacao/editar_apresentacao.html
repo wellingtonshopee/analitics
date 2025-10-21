@@ -1,0 +1,351 @@
+{% extends "core/base.html" %}
+{% load widget_tweaks %}
+
+{% block titulo %}{{ titulo }}{% endblock %}
+
+{% block custom_styles %}
+<style>
+    /* Estilo para que o campo de ordem não seja gigante */
+    .form-row .form-control-sm { width: 100px; }
+    .card-editor { border-left: 5px solid #007bff; }
+    .topico-item { 
+        margin-bottom: 25px; 
+        padding: 15px; 
+        border: 1px solid #dee2e6; 
+        border-radius: 5px; 
+        transition: opacity 0.3s ease; /* Para a animação de exclusão */
+    }
+    .topico-item.deleted { 
+        opacity: 0.5; 
+        background-color: #f8d7da !important; 
+    }
+    .card-editor-item.deleted {
+        opacity: 0.5; 
+        text-decoration: line-through;
+    }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid">
+    <div class="row mb-4 align-items-center">
+        <div class="col-12">
+            <h1><i class="fas fa-edit"></i> {{ titulo }}</h1>
+            <p class="lead">Edite os tópicos e cards do painel de **{{ apresentacao.data_apresentacao|date:"d/m/Y" }}**.</p>
+        </div>
+    </div>
+    
+    <form method="post" id="main-form">
+        {% csrf_token %}
+        
+        {# Display do campo de data da Apresentação (ApresentacaoForm) #}
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Data da Apresentação</label>
+                {# ApresentacaoForm não está sendo validado aqui, apenas os Formsets #}
+                <input type="date" class="form-control" value="{{ apresentacao.data_apresentacao|date:'Y-m-d' }}" readonly>
+            </div>
+        </div>
+        
+        {{ topico_formset.management_form }}
+        
+        <div class="row">
+            <div class="col-12">
+                <div id="topico-formset-container">
+                
+                    {% for topico_form in topico_formset %}
+                        <div class="topico-item mb-4 bg-light shadow-sm" data-form-prefix="{{ topico_form.prefix }}">
+                            
+                            {# Inclui a estrutura do Tópico #}
+                            {% include 'apresentacao/topico_card_forms.html' with form=topico_form prefix=topico_form.prefix %}
+                            
+                            <h5 class="mt-4 mb-3">Cards do Tópico:</h5>
+                            <div class="row g-3 card-formset-container" id="card-formset-{{ topico_form.prefix }}">
+                                
+                                {# Encontra o CardFormSet correspondente que foi gerado na view #}
+                                {% for card_fs in card_formsets %}
+                                    {% if card_fs.instance.pk == topico_form.instance.pk %}
+                                            
+                                            {{ card_fs.management_form }}
+
+                                            {% for card_form in card_fs %}
+                                                <div class="col-xl-3 col-lg-4 col-md-6 card-editor-item {% if card_form.DELETE.value %}deleted{% endif %}" data-form-prefix="{{ card_form.prefix }}">
+                                                    <div class="card card-editor h-100">
+                                                        <div class="card-body p-2">
+                                                            <div class="mb-2">
+                                                                <label class="form-label small mb-0">Título:</label>
+                                                                {% render_field card_form.titulo %}
+                                                            </div>
+                                                            <div class="mb-2">
+                                                                <label class="form-label small mb-0">Valor Exibição:</label>
+                                                                {% render_field card_form.valor_formatado %}
+                                                            </div>
+                                                            <div class="mb-2">
+                                                                <label class="form-label small mb-0">Cor:</label>
+                                                                {% render_field card_form.cor %}
+                                                            </div>
+                                                            <div class="row g-2">
+                                                                <div class="col-4">
+                                                                    <label class="form-label small mb-0">Ordem:</label>
+                                                                    {% render_field card_form.ordem %}
+                                                                </div>
+                                                                <div class="col-8 d-flex align-items-end">
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger w-100 delete-card-btn" data-card-prefix="{{ card_form.prefix }}">
+                                                                        <i class="fas fa-times"></i> Excluir
+                                                                    </button>
+                                                                    {# O campo DELETE é crucial para a exclusão #}
+                                                                    {% render_field card_form.DELETE %} 
+                                                                </div>
+                                                            </div>
+                                                            {# Campos Hidden #}
+                                                            {{ card_form.id }}
+                                                            {{ card_form.valor }}
+                                                            {% if card_form.non_field_errors %}
+                                                                <div class="text-danger small mt-2">{{ card_form.non_field_errors }}</div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                            
+                                            {# Formulário Vazio para ADICIONAR CARD #}
+                                            <div class="col-12 mt-3">
+                                                <button type="button" class="btn btn-sm btn-outline-primary add-card-btn" data-card-fs-container="#card-formset-{{ topico_form.prefix }}" data-card-prefix-base="card-{{ topico_form.prefix }}">
+                                                    <i class="fas fa-plus"></i> Adicionar Card
+                                                </button>
+                                            </div>
+                                            
+                                        {% endif %}
+                                {% endfor %}
+
+                                {# Garante que, para um Tópico novo, o CardFormSet Vazio também seja incluído para ter o Management Form #}
+                                {% if not topico_form.instance.pk %}
+                                    {# Aqui, você precisaria do CardFormSet vazio completo, incluindo MANAGEMENT FORM #}
+                                    <div class="col-12 mt-3">
+                                        {# Como isso é complexo, para o Tópico NOVO, vamos confiar 100% no JS para o Management Form #}
+                                        <button type="button" class="btn btn-sm btn-outline-primary add-card-btn" data-card-fs-container="#card-formset-{{ topico_form.prefix }}" data-card-prefix-base="card-{{ topico_form.prefix }}">
+                                            <i class="fas fa-plus"></i> Adicionar Card
+                                        </button>
+                                    </div>
+                                {% endif %}
+
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    {# Formulário Vazio para ADICIONAR TÓPICO #}
+                    <div id="empty-topico-form" class="topico-item mb-4 bg-light shadow-sm d-none" data-form-prefix="__prefix__">
+                        {% include 'apresentacao/topico_card_forms.html' with form=topico_formset.empty_form prefix=topico_formset.prefix %}
+                        
+                        <h5 class="mt-4 mb-3">Cards do Tópico:</h5>
+                        <div class="row g-3 card-formset-container" id="card-formset-{{ topico_formset.prefix }}-__prefix__">
+                            
+                            {# O Management Form do Card Vazio é necessário para a clonagem #}
+                            {% with card_fs_empty_prefix="card-"|add:topico_formset.prefix|add:"-__prefix__" %}
+                                <input type="hidden" name="{{ card_fs_empty_prefix }}-TOTAL_FORMS" id="id-{{ card_fs_empty_prefix }}-TOTAL_FORMS" value="0">
+                                <input type="hidden" name="{{ card_fs_empty_prefix }}-INITIAL_FORMS" id="id-{{ card_fs_empty_prefix }}-INITIAL_FORMS" value="0">
+                                <input type="hidden" name="{{ card_fs_empty_prefix }}-MIN_NUM_FORMS" id="id-{{ card_fs_empty_prefix }}-MIN_NUM_FORMS">
+                                <input type="hidden" name="{{ card_fs_empty_prefix }}-MAX_NUM_FORMS" id="id-{{ card_fs_empty_prefix }}-MAX_NUM_FORMS">
+                            {% endwith %}
+
+                            <div class="col-12 mt-3">
+                                <button type="button" class="btn btn-sm btn-outline-primary add-card-btn" data-card-fs-container="#card-formset-topico-__prefix__" data-card-prefix-base="card-topico-__prefix__">
+                                    <i class="fas fa-plus"></i> Adicionar Card
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <button type="button" id="add-topico-btn" class="btn btn-success my-4">
+            <i class="fas fa-plus"></i> Adicionar Outro Tópico
+        </button>
+
+        <div class="row my-4">
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary btn-lg me-2">
+                    <i class="fas fa-save"></i> Salvar Apresentação
+                </button>
+                 <a href="{% url 'apresentacao:detalhe_apresentacao' pk=apresentacao.pk %}" class="btn btn-outline-secondary btn-lg">
+                    <i class="fas fa-eye"></i> Visualizar
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% include 'apresentacao/card_form_template.html' with form=empty_card_form prefix='card-__topico_prefix__-__card_prefix__' %}
+
+{% endblock %}
+
+{% block custom_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const topicoContainer = document.getElementById('topico-formset-container');
+        const addTopicoBtn = document.getElementById('add-topico-btn');
+        const totalTopicoForms = document.getElementById('id-topico-TOTAL_FORMS');
+        const emptyTopicoForm = document.getElementById('empty-topico-form');
+        
+        // O template de card vazio (dentro do HTML, gerado pelo include)
+        const cardFormTemplateHTML = document.getElementById('empty-card-form-template').innerHTML;
+
+        // Função auxiliar para reindexar elementos (CRUCIAL)
+        function updateElementIndex(el, prefix, ndx) {
+            // Regex para IDs/Names no formato (prefix-0), (prefix-1), etc.
+            const idNameRegex = new RegExp(`(${prefix}-\\d+)`);
+            const forRegex = new RegExp(`for="${prefix}-\\d+`);
+
+            Array.from(el.querySelectorAll('*')).forEach(child => {
+                // Atualiza ID e NAME
+                if (child.id) child.id = child.id.replace(idNameRegex, `${prefix}-${ndx}`);
+                if (child.name) child.name = child.name.replace(idNameRegex, `${prefix}-${ndx}`);
+                // Atualiza FOR (para labels)
+                Array.from(child.attributes).forEach(attr => {
+                    if (attr.name === 'for') {
+                        attr.value = attr.value.replace(forRegex, `for="${prefix}-${ndx}`);
+                    }
+                });
+            });
+
+            // Atualiza o prefixo do próprio elemento pai (para ser encontrado na exclusão)
+            if (el.dataset.formPrefix) el.dataset.formPrefix = `${prefix}-${ndx}`;
+
+            // Atualiza IDs do Formset Aninhado (Container de Cards)
+            const cardFsContainer = el.querySelector('.card-formset-container');
+            if (cardFsContainer) {
+                // Atualiza o ID do container (card-formset-topico-0)
+                cardFsContainer.id = `card-formset-${prefix}-${ndx}`;
+            }
+
+            // Atualiza prefixos dos campos de Management Form do CardFormSet
+            // Ex: card-topico-__prefix__-TOTAL_FORMS -> card-topico-0-TOTAL_FORMS
+            const cardMgmtInputs = el.querySelectorAll('[name*="__prefix__-"]');
+            const mgmtPrefixRegex = new RegExp(`card-${prefix}-__prefix__`);
+            cardMgmtInputs.forEach(input => {
+                input.name = input.name.replace(mgmtPrefixRegex, `card-${prefix}-${ndx}`);
+                input.id = input.id.replace(mgmtPrefixRegex, `card-${prefix}-${ndx}`);
+            });
+            
+            // Atualiza o data-card-fs-container do botão adicionar card
+            const addCardBtn = el.querySelector('.add-card-btn');
+            if(addCardBtn) {
+                addCardBtn.dataset.cardFsContainer = `#card-formset-${prefix}-${ndx}`;
+                // Atualiza o prefixo base do card para novos cartões
+                addCardBtn.dataset.cardPrefixBase = `card-${prefix}-${ndx}`;
+            }
+        }
+        
+        // --- Manipulação de Tópicos (Pai) ---
+
+        addTopicoBtn.addEventListener('click', function() {
+            const currentTopicoForms = parseInt(totalTopicoForms.value);
+            const newForm = emptyTopicoForm.cloneNode(true);
+            
+            // 1. Prepara o novo formulário
+            newForm.classList.remove('d-none', 'deleted');
+            newForm.removeAttribute('id');
+
+            // 2. Troca o prefixo 'topico-__prefix__' e 'card-topico-__prefix__'
+            const newFormHTML = newForm.innerHTML.replace(/__prefix__/g, currentTopicoForms);
+            newForm.innerHTML = newFormHTML;
+            
+            // 3. Re-indexa todos os elementos do novo formulário Tópico
+            updateElementIndex(newForm, 'topico', currentTopicoForms);
+
+            // 4. Adiciona o novo formulário Tópico ao container
+            topicoContainer.appendChild(newForm);
+            
+            // 5. Atualiza o TOTAL_FORMS
+            totalTopicoForms.value = currentTopicoForms + 1;
+            
+            // 6. Re-bind o listener do botão Adicionar Card no novo tópico
+            rebindCardListeners(newForm);
+        });
+
+        // Deleção de Tópicos
+        topicoContainer.addEventListener('click', function(e) {
+            if (e.target.classList.contains('delete-topico-btn')) {
+                const formsetPrefix = e.target.dataset.topicoPrefix;
+                const formElement = document.querySelector(`[data-form-prefix="${formsetPrefix}"]`);
+                
+                // Marca o campo DELETE como checado
+                const deleteCheckbox = formElement.querySelector(`#id-${formsetPrefix}-DELETE`);
+                if(deleteCheckbox) deleteCheckbox.checked = true;
+                
+                // Adiciona a classe 'deleted' para efeito visual, em vez de remover totalmente (o DELETE é que remove no backend)
+                formElement.classList.add('deleted');
+                
+                // Desabilita campos para evitar submissão de dados que serão ignorados, mantendo o DELETE checado
+                Array.from(formElement.querySelectorAll('input:not([type="hidden"]), select, textarea')).forEach(el => el.disabled = true);
+            }
+        });
+
+        // --- Manipulação de Cards (Filho) ---
+
+        function rebindCardListeners(container) {
+             const addCardButtons = container.querySelectorAll('.add-card-btn');
+             addCardButtons.forEach(btn => btn.removeEventListener('click', handleAddCard));
+             addCardButtons.forEach(btn => btn.addEventListener('click', handleAddCard));
+        }
+
+        function handleAddCard(e) {
+            e.preventDefault();
+            const btn = e.target.closest('.add-card-btn');
+            const fsContainerSelector = btn.dataset.cardFsContainer;
+            const cardPrefixBase = btn.dataset.cardPrefixBase; // Ex: card-topico-0
+            const fsContainer = document.querySelector(fsContainerSelector); // Container de Cards do Tópico
+            
+            const totalCardsInput = fsContainer.querySelector(`#id-${cardPrefixBase}-TOTAL_FORMS`);
+            if (!totalCardsInput) {
+                console.error("Management Form do Card não encontrado. Verifique o prefixo.");
+                return;
+            }
+
+            const currentCardForms = parseInt(totalCardsInput.value);
+            
+            // 1. Substitui '__topico_prefix__', '__card_prefix__' e '__prefix__' pelo novo índice
+            const newCardPrefix = currentCardForms;
+            const newFormHTML = cardFormTemplateHTML
+                .replace(/__topico_prefix__/g, cardPrefixBase.replace('card-', ''))
+                .replace(/__card_prefix__/g, newCardPrefix)
+                .replace(/__prefix__/g, newCardPrefix);
+            
+            // 2. Cria um elemento div para injetar o HTML
+            const newCardItem = document.createElement('div');
+            newCardItem.className = 'col-xl-3 col-lg-4 col-md-6 card-editor-item';
+            newCardItem.innerHTML = newFormHTML;
+            newCardItem.dataset.formPrefix = `${cardPrefixBase}-${newCardPrefix}`;
+
+            // 3. Adiciona o novo formulário de Card
+            btn.before(newCardItem); // Coloca antes do botão "Adicionar Card"
+            
+            // 4. Atualiza o TOTAL_FORMS
+            totalCardsInput.value = currentCardForms + 1;
+        }
+
+        // Deleção de Cards
+        topicoContainer.addEventListener('click', function(e) {
+            if (e.target.classList.contains('delete-card-btn')) {
+                const cardPrefix = e.target.dataset.cardPrefix;
+                const formElement = document.querySelector(`[data-form-prefix="${cardPrefix}"]`);
+                
+                // Marca o campo DELETE como checado
+                const deleteCheckbox = formElement.querySelector(`#id-${cardPrefix}-DELETE`);
+                if(deleteCheckbox) deleteCheckbox.checked = true;
+                
+                // Adiciona a classe 'deleted' para efeito visual
+                formElement.classList.add('deleted');
+                
+                // Desabilita campos para evitar submissão de dados que serão ignorados, mantendo o DELETE checado
+                Array.from(formElement.querySelectorAll('input:not([type="hidden"]), select, textarea')).forEach(el => el.disabled = true);
+            }
+        });
+        
+        // Inicializa listeners para os botões de adicionar card existentes (no carregamento da página)
+        rebindCardListeners(document);
+
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends "core/base.html" %}
+{% load humanize %}
+{% load templatefilters %}
+
+{% block titulo %}{{ titulo }}{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    
+    {% if form %}
+    <div class="card shadow mb-4 border-0">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end" action="{% url detail_url_name detail_slug %}" novalidate>
+
+                <div class="col-md-3">
+                    <label for="{{ form.data_inicio.id_for_label }}" class="form-label">Data Início:</label>
+                    {{ form.data_inicio }}
+                </div>
+                <div class="col-md-3">
+                    <label for="{{ form.data_fim.id_for_label }}" class="form-label">Data Fim:</label>
+                    {{ form.data_fim }}
+                </div>
+                <div class="col-md-3">
+                    <label for="{{ form.sort_code.id_for_label }}" class="form-label">Sort Code:</label>
+                    {{ form.sort_code }}
+                </div>
+
+                {% if not is_status_detail %}
+                <div class="col-md-3">
+                    <label for="{{ form.final_status.id_for_label }}" class="form-label">Final Status:</label>
+                    {{ form.final_status }}
+                </div>
+                {% endif %}
+
+                <div class="col-md-12 d-flex justify-content-start">
+                    <button type="submit" class="btn btn-primary me-2"><i class="fas fa-filter me-1"></i> Aplicar Filtros</button>
+                    <a href="{% url detail_url_name detail_slug %}" class="btn btn-outline-secondary">Limpar</a>
+                </div>
+                
+                {% if count_type_slug %}
+                    <input type="hidden" name="count_type_slug" value="{{ count_type_slug }}">
+                {% endif %}
+                {% if status_detail_slug %}
+                    <input type="hidden" name="status_detail_slug" value="{{ status_detail_slug }}">
+                {% endif %}
+
+            </form>
+        </div>
+    </div>
+    {% endif %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        {# O botão Voltar para Dashboard #}
+        <a href="{% url 'parcel_sweeper:dashboard' %}{% if filter_params %}?{{ filter_params|exclude_page }}{% endif %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Voltar para Dashboard
+        </a>
+        
+        <a href="{{ export_url }}" class="btn btn-success">
+            <i class="fas fa-file-csv me-2"></i> Exportar {{ total_registros|intcomma }} Registros (CSV)
+        </a>
+    </div>
+
+    <h1 class="mb-4">{{ titulo }}</h1>
+    <p class="lead text-muted">Exibindo todos os **{{ count_type_name }}** para o período filtrado. (Total: {{ total_registros|intcomma }})</p>
+
+    {% if page_obj.object_list %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>Tracking Number</th>
+                    <th>Final Status</th>
+                    <th>Count Type</th>
+                    <th>Next Step Action</th> 
+                    <th>OnHold Times</th>
+                    <th>Expedite Tag</th>
+                    <th>Data Referência</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for parcel in page_obj.object_list %}
+                <tr>
+                    <td>{{ parcel.spx_tracking_number }}</td>
+                    <td>{{ parcel.final_status }}</td>
+                    <td>{{ parcel.count_type }}</td>
+                    <td>{{ parcel.next_step_action|default:"-" }}</td> 
+                    <td>{{ parcel.on_hold_times|intcomma }}</td>
+                    <td>{{ parcel.expedite_tag|default:"-" }}</td>
+                    <td>{{ parcel.data_referencia }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# Lógica de Paginação #}
+    <nav aria-label="Paginação">
+        <ul class="pagination justify-content-center">
+            
+            {# 🔑 CRUCIAL: Define uma variável 'filter_qs_clean' contendo TODOS os filtros, MENOS 'page'. #}
+            {% with filter_qs_clean=filter_params|exclude_page %} 
+
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page=1&{{ filter_qs_clean }}">Primeira</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ filter_qs_clean }}">Anterior</a></li>
+            {% endif %}
+
+            {# Bloco de páginas centrais #}
+            {% for i in page_obj.paginator.page_range %}
+                {% if page_obj.number == i %}
+                    <li class="page-item active" aria-current="page"><span class="page-link">{{ i }}</span></li>
+                {# Usa o filtro 'add' para controle das páginas vizinhas #}
+                {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ i }}&{{ filter_qs_clean }}">{{ i }}</a></li>
+                {% elif i == page_obj.number|add:'-3' or i == page_obj.number|add:'3' %}
+                    <li class="page-item disabled d-none d-sm-block"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ filter_qs_clean }}">Próxima</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&{{ filter_qs_clean }}">Última</a></li>
+            {% endif %}
+            
+            {% endwith %}
+        </ul>
+    </nav>
+    {% else %}
+    <div class="alert alert-warning" role="alert">
+        Nenhum registro encontrado para a condição **{{ count_type_name }}** com os filtros aplicados.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

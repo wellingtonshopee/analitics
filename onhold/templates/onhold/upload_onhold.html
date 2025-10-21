@@ -1,0 +1,60 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}Upload ONHold{% endblock %}
+
+{% block conteudo %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h1 class="mb-4">Upload de Arquivo On Hold</h1>
+        <p class="lead text-muted">Envie o arquivo CSV diário de pedidos em retenção para registro no sistema.</p>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        {# CAMPO NOVO: DATA DE REFERÊNCIA (data_envio) #}
+                        <div class="col-md-6 mb-3">
+                            <label for="dataReferencia" class="form-label fw-bold">Data de Referência (data_envio):</label>
+                            <input class="form-control" 
+                                   type="date" 
+                                   id="dataReferencia" 
+                                   name="data_referencia" 
+                                   required
+                                   title="Selecione a data que será registrada no campo 'data_envio' de cada registro importado.">
+                            <div class="form-text">Selecione o dia que você deseja registrar nos pacotes.</div>
+                        </div>
+
+                        {# CAMPO DE ARQUIVO EXISTENTE #}
+                        <div class="col-md-6 mb-3">
+                            <label for="csvFile" class="form-label fw-bold">Selecione o Arquivo CSV:</label>
+                            <input class="form-control" 
+                                   type="file" 
+                                   id="csvFile" 
+                                   name="csv_file" 
+                                   accept=".csv" 
+                                   required>
+                            <div class="form-text">Apenas arquivos `.csv` são aceitos.</div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload me-1"></i> Carregar e Processar Dados
+                    </button>
+                    <a href="{% url 'dashboard' %}" class="btn btn-secondary ms-2">Cancelar</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

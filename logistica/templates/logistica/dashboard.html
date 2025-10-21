@@ -1,0 +1,102 @@
+{% extends "core/base.html" %} 
+{% load widget_tweaks %}
+{% load humanize %} 
+
+{% block titulo %}{{ titulo }}{% endblock %}
+
+{% block conteudo %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-9">
+            <h1><i class="fas fa-chart-pie"></i> {{ titulo }}</h1>
+            <p class="lead">Totais agregados de todas as métricas no período selecionado, organizados por área.</p>
+        </div>
+        <div class="col-md-3 text-end">
+            <a href="{% url 'logistica:listar_dados' %}" class="btn btn-secondary">
+                <i class="fas fa-table"></i> Ver Detalhes por Dia
+            </a>
+        </div>
+    </div>
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Filtro de Período</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label">Data de Início:</label>
+                    {% render_field form_filtro.data_inicio %}
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Data de Fim:</label>
+                    {% render_field form_filtro.data_fim %}
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100 me-2">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
+                    <a href="{% url 'logistica:dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-redo"></i>
+                    </a>
+                </div>
+                {% for error in form_filtro.non_field_errors %}
+                    <div class="col-12 text-danger small mt-2">{{ error }}</div>
+                {% endfor %}
+            </form>
+        </div>
+    </div>
+
+    {% for tema, dados_tema in temas_kpis.items %}
+        <div class="row mt-5">
+            <div class="col-12">
+                <h3 class="mb-3 border-bottom pb-2">{{ tema }}</h3>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            
+            {# Se for o tema de Expedição, adiciona a coluna para o velocímetro #}
+            {% if tema == 'Expedição - Carregamento' %}
+                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
+                    <div class="card shadow-sm h-100 border border-3 border-{{ dados_tema.performance_chart.status }}">
+                        <div class="card-body text-center">
+                            <h6 class="card-title text-uppercase fw-bold text-muted">Performance Missorted / Iniciados</h6>
+                            
+                            {# Placeholder para Gráfico de Velocímetro - Mude para seu JS de Gráfico #}
+                            <div class="p-3 text-{{ dados_tema.performance_chart.status }}">
+                                <i class="fas fa-tachometer-alt fa-5x"></i>
+                            </div>
+                            
+                            <h4 class="fw-bold mt-2">
+                                {{ dados_tema.performance_chart.percentual|default:"0"|floatformat:2 }}% 
+                            </h4>
+                            <p class="small text-{{ dados_tema.performance_chart.status }} fw-bold">
+                                {{ dados_tema.performance_chart.mensagem }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            {# Exibe os KPIs do Tema #}
+            {% for kpi in dados_tema.kpis %}
+                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
+                    <div class="card text-white bg-{{ kpi.cor }} shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title text-uppercase">{{ kpi.titulo }}</h6>
+                                    <h2 class="card-text fw-bold">{{ kpi.valor|default:"0"|intcomma }}</h2>
+                                </div>
+                                <i class="fas {{ kpi.icone }} fa-3x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+
+</div>
+{% endblock %}

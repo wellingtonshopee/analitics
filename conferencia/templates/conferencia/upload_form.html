@@ -1,0 +1,60 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load humanize %} 
+
+{% block titulo %}Upload - Conferência de Listas{% endblock %}
+
+{% block conteudo %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1>Upload de Arquivos para Conferência</h1>
+            <p class="lead">Envie as Listas A e B (máximo 100 mil registros por arquivo) para iniciar a conferência de dados.</p>
+            <hr>
+        </div>
+    </div>
+
+    {# Exibe mensagens (sucesso/erro) do Django #}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Formulário de Upload</h5>
+        </div>
+        <div class="card-body">
+            {# O formulário deve usar 'multipart/form-data' para permitir o upload de arquivos #}
+            <form method="post" enctype="multipart/form-data" action="{% url 'conferencia:upload_arquivos' %}">
+                {% csrf_token %}
+
+                {# Renderiza os campos do formulário (lista_a e lista_b) #}
+                {% for field in form %}
+                <div class="mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+
+                <button type="submit" class="btn btn-success mt-3"><i class="fas fa-upload me-2"></i> Carregar Arquivos e Iniciar</button>
+                <a href="{% url 'conferencia:listagem_resultados' %}" class="btn btn-outline-secondary mt-3">Ver Resultados</a>
+            </form>
+        </div>
+    </div>
+
+    <div class="alert alert-info mt-4">
+        **Atenção:** Ao carregar novos arquivos, **todos os registros de conferências anteriores serão apagados** do banco de dados.
+    </div>
+</div>
+{% endblock %}
